@@ -1,0 +1,1730 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/images/truck.svg" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    />
+    <title>Delivery Driver</title>
+
+    <!-- Leaflet CSS -->
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    />
+
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+        user-select: none;
+        -webkit-user-select: none;
+        font-family:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      }
+      body,
+      html {
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background-color: #111;
+        color: #fff;
+      }
+
+      .screen {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 10;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        background: rgba(15, 23, 42, 0.95);
+        padding: 20px;
+        text-align: center;
+      }
+      .hidden {
+        display: none !important;
+      }
+
+      /* Transparent Overlay for End Game Screen */
+      #screen-gameover {
+        background: rgba(15, 23, 42, 0.65) !important;
+        backdrop-filter: blur(8px);
+        z-index: 20;
+      }
+
+      .modal-card {
+        background: rgba(30, 41, 59, 0.95);
+        border: 2px solid #38bdf8;
+        border-radius: 20px;
+        padding: 28px 24px;
+        width: 90%;
+        max-width: 420px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7);
+        text-align: center;
+      }
+
+      h1 {
+        font-size: 1.8rem;
+        color: #38bdf8;
+        margin-bottom: 8px;
+      }
+      p {
+        font-size: 0.95rem;
+        color: #94a3b8;
+        margin-bottom: 16px;
+      }
+
+      .btn-group {
+        display: flex;
+        gap: 12px;
+        justify-content: center;
+        margin-top: 20px;
+        width: 100%;
+      }
+
+      .btn {
+        background: #6cac06;
+        color: #fff;
+        border: none;
+        padding: 12px 20px;
+        font-size: 0.95rem;
+        font-weight: bold;
+        border-radius: 12px;
+        cursor: pointer;
+        box-shadow: 0 4px 14px rgba(2, 132, 199, 0.4);
+        transition:
+          transform 0.1s,
+          background 0.2s;
+      }
+      .btn:active {
+        transform: scale(0.96);
+        background: #0369a1;
+      }
+      .btn-secondary {
+        background: #334155;
+        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
+      }
+      .btn-secondary:active {
+        background: #475569;
+      }
+
+      .stats-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+        background: rgba(15, 23, 42, 0.7);
+        border-radius: 12px;
+        padding: 14px;
+        margin: 16px 0;
+        text-align: left;
+      }
+      .stat-box {
+        display: flex;
+        flex-direction: column;
+      }
+      .stat-label {
+        font-size: 0.72rem;
+        color: #94a3b8;
+        text-transform: uppercase;
+        font-weight: 600;
+      }
+      .stat-value {
+        font-size: 1.1rem;
+        font-weight: bold;
+        color: #f8fafc;
+      }
+
+      .job-list {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        width: 100%;
+        max-width: 400px;
+      }
+      .job-card {
+        background: #1e293b;
+        border: 2px solid #334155;
+        border-radius: 12px;
+        padding: 16px;
+        text-align: left;
+        cursor: pointer;
+        transition: border-color 0.2s;
+      }
+      .job-card:hover,
+      .job-card:active {
+        border-color: #38bdf8;
+      }
+      .job-title {
+        font-weight: bold;
+        color: #f8fafc;
+        margin-bottom: 4px;
+      }
+      .job-meta {
+        font-size: 0.85rem;
+        color: #38bdf8;
+        margin-bottom: 2px;
+      }
+      .job-sub {
+        font-size: 0.8rem;
+        color: #94a3b8;
+      }
+
+      #game-container {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 1;
+      }
+      #three-canvas {
+        width: 100%;
+        height: 100%;
+        display: block;
+      }
+
+      #minimap-container {
+        position: absolute;
+        top: 12px;
+        right: 12px;
+        width: 150px;
+        height: 150px;
+        border-radius: 16px;
+        border: 3px solid rgba(56, 189, 248, 0.6);
+        overflow: hidden;
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.5);
+        z-index: 5;
+      }
+      #minimap {
+        width: 100%;
+        height: 100%;
+        background: #111;
+      }
+
+      #hud {
+        position: absolute;
+        top: 12px;
+        left: 12px;
+        z-index: 5;
+        background: rgba(15, 23, 42, 0.85);
+        backdrop-filter: blur(8px);
+        padding: 12px 18px;
+        border-radius: 12px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        min-width: 180px;
+      }
+      .hud-row {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+      }
+      .hud-item {
+        font-size: 0.9rem;
+        font-weight: 700;
+      }
+      .hud-label {
+        color: #94a3b8;
+        font-size: 0.72rem;
+        text-transform: uppercase;
+      }
+
+      #action-popup {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: rgba(15, 23, 42, 0.95);
+        border: 2px solid #38bdf8;
+        border-radius: 16px;
+        padding: 24px;
+        z-index: 8;
+        text-align: center;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8);
+        max-width: 320px;
+        width: 85%;
+      }
+
+      #touch-controls {
+        position: absolute;
+        bottom: 20px;
+        left: 0;
+        width: 100%;
+        padding: 0 20px;
+        display: flex;
+        justify-content: space-between;
+        z-index: 5;
+        pointer-events: none;
+      }
+      .control-group {
+        display: flex;
+        gap: 12px;
+        pointer-events: auto;
+      }
+      .control-btn {
+        width: 65px;
+        height: 65px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.15);
+        backdrop-filter: blur(4px);
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        color: white;
+        font-size: 1.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        touch-action: manipulation;
+      }
+      .control-btn:active {
+        background: rgba(56, 189, 248, 0.5);
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Home Screen -->
+    <div id="screen-home" class="screen">
+      <h1>Delivery Driver</h1>
+      <p>
+        Deliver packages across real local landmarks with live weather and
+        traffic!
+      </p>
+      <button id="btn-play" class="btn" style="max-width: 280px">
+        PLAY NOW
+      </button>
+    </div>
+
+    <!-- Job Selection Screen -->
+    <div id="screen-jobs" class="screen hidden">
+      <h1>Available Jobs</h1>
+      <p>Select a delivery request near your current position:</p>
+      <div id="job-list" class="job-list">
+        <div style="color: #94a3b8">Locating GPS, weather & local hubs...</div>
+      </div>
+    </div>
+
+    <!-- Transparent Game Over / Mission Summary Overlay -->
+    <div id="screen-gameover" class="screen hidden">
+      <div class="modal-card">
+        <h1 id="gameover-title">Delivery Success!</h1>
+        <p id="gameover-msg">Package successfully delivered on time.</p>
+
+        <div class="stats-grid">
+          <div class="stat-box">
+            <span class="stat-label">Distance</span>
+            <span id="stat-dist" class="stat-value">0 km</span>
+          </div>
+          <div class="stat-box">
+            <span class="stat-label">Time Remaining</span>
+            <span id="stat-time" class="stat-value">00:00</span>
+          </div>
+          <div class="stat-box">
+            <span class="stat-label">Vehicle Damage</span>
+            <span id="stat-damage" class="stat-value">0%</span>
+          </div>
+          <div class="stat-box">
+            <span class="stat-label">Weather / Time</span>
+            <span id="stat-env" class="stat-value" style="font-size: 0.85rem"
+              >Clear / Day</span
+            >
+          </div>
+        </div>
+
+        <div class="btn-group">
+          <button id="btn-retry" class="btn btn-secondary">
+            RETRY DELIVERY
+          </button>
+          <button id="btn-next-job" class="btn">NEW JOB</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Game Container -->
+    <div id="game-container" class="hidden">
+      <canvas id="three-canvas"></canvas>
+
+      <!-- Action Modal for Lay-by Stop -->
+      <div id="action-popup" class="hidden">
+        <h2 style="color: #38bdf8; margin-bottom: 8px">
+          Pickup Point Reached!
+        </h2>
+        <p style="font-size: 0.85rem; color: #cbd5e1; margin-bottom: 16px">
+          Vehicle parked in lay-by. Package loaded onto roof!
+        </p>
+        <button id="btn-resume" class="btn">CONTINUE TO DROP-OFF</button>
+      </div>
+
+      <!-- HUD -->
+      <div id="hud">
+        <div>
+          <div class="hud-label">Objective</div>
+          <div id="hud-status" class="hud-item" style="color: #f59e0b">
+            Phase 1: Drive to Pickup
+          </div>
+        </div>
+        <div class="hud-row" style="margin-top: 4px">
+          <div>
+            <div class="hud-label">Time Left</div>
+            <div id="hud-timer" class="hud-item">00:00</div>
+          </div>
+          <div>
+            <div class="hud-label">Progress</div>
+            <div id="hud-progress" class="hud-item">0%</div>
+          </div>
+        </div>
+        <div class="hud-row" style="margin-top: 4px">
+          <div>
+            <div class="hud-label">Damage</div>
+            <div id="hud-damage" class="hud-item" style="color: #22c55e">
+              0%
+            </div>
+          </div>
+          <div>
+            <div class="hud-label">Weather / Time</div>
+            <div
+              id="hud-env"
+              class="hud-item"
+              style="color: #cbd5e1; font-size: 0.78rem"
+            >
+              Clear
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Leaflet Minimap -->
+      <div id="minimap-container">
+        <div id="minimap"></div>
+      </div>
+
+      <!-- Mobile Touch Controls -->
+      <div id="touch-controls">
+        <div class="control-group">
+          <div id="btn-left" class="control-btn">◀</div>
+          <div id="btn-right" class="control-btn">▶</div>
+        </div>
+        <div class="control-group">
+          <div
+            id="btn-brake"
+            class="control-btn"
+            style="background: rgba(239, 68, 68, 0.25)"
+          >
+            🛑
+          </div>
+          <div
+            id="btn-gas"
+            class="control-btn"
+            style="background: rgba(34, 197, 94, 0.25)"
+          >
+            ⚡
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- External Configuration -->
+    <script src="/api/config.js"></script>
+
+    <!-- External Libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <!-- Confetti JS -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+    <script>
+      /* =========================================================================
+       GLOBAL STATE & LOCAL REGION HUBS
+       ========================================================================= */
+      const GameState = {
+        userCoords: null,
+        activeJob: null,
+        currentPhase: "PICKUP",
+        distanceTraveled: 0,
+        totalRouteDistance: 0,
+        timeRemaining: 0,
+        damage: 0,
+        currentSpeed: 0,
+        isGameRunning: false,
+        routePoints: [],
+        routeCumDistances: [],
+        weatherCondition: "Clear",
+        timeOfDayLabel: "Day",
+        isNight: false,
+      };
+
+      // Pre-defined local landmark hubs (e.g. Magboro to Ikeja corridor)
+      const LOCAL_HUBS = [
+        { name: "Magboro, Ogun State", lat: 6.6853, lon: 3.4211 },
+        { name: "Ikeja, Lagos", lat: 6.6018, lon: 3.3515 },
+        { name: "Victoria Island, Lagos", lat: 6.4281, lon: 3.4219 },
+        { name: "Berger, Lagos", lat: 6.6521, lon: 3.3712 },
+        { name: "Lekki Phase 1, Lagos", lat: 6.4474, lon: 3.4723 },
+      ];
+
+      /* =========================================================================
+       CLASS: SMART REACTIVE NPC VEHICLE
+       ========================================================================= */
+      class NPCVehicle {
+        constructor(scene, laneIndex, startZ) {
+          this.scene = scene;
+          this.currentLane = laneIndex;
+          this.speed = 12 + Math.random() * 10; // NPC base speed (m/s)
+          this.targetX = CONFIG.LANES[laneIndex];
+          this.hitCooldown = 0; // Cooldown timer for continuous re-hits
+
+          // Vehicle Mesh
+          const geo = new THREE.BoxGeometry(2.2, 1.2, 3.8);
+          const colors = [0xef4444, 0xeab308, 0xa855f7, 0x64748b, 0x10b981];
+          const mat = new THREE.MeshStandardMaterial({
+            color: colors[Math.floor(Math.random() * colors.length)],
+            roughness: 0.4,
+          });
+
+          this.mesh = new THREE.Mesh(geo, mat);
+          this.mesh.position.set(this.targetX, 0.6, startZ);
+          this.mesh.userData = { type: "CAR" };
+          this.scene.add(this.mesh);
+        }
+
+        Update(delta, playerZ, playerLane) {
+          if (this.hitCooldown > 0) {
+            this.hitCooldown -= delta;
+          }
+
+          // 1. Move Forward
+          this.mesh.position.z += this.speed * delta;
+
+          // 2. Smooth Lane Interpolation
+          this.mesh.position.x = THREE.MathUtils.lerp(
+            this.mesh.position.x,
+            this.targetX,
+            delta * 5,
+          );
+
+          // 3. Smart Reaction: If player approaches from behind in same lane, NPC changes lane
+          const distToPlayer = this.mesh.position.z - playerZ;
+          if (
+            distToPlayer > 0 &&
+            distToPlayer < 22 &&
+            this.currentLane === playerLane
+          ) {
+            this.TryChangeLane();
+          }
+        }
+
+        TryChangeLane() {
+          const possibleLanes = [];
+          if (this.currentLane > 0) possibleLanes.push(this.currentLane - 1);
+          if (this.currentLane < CONFIG.LANES.length - 1)
+            possibleLanes.push(this.currentLane + 1);
+
+          if (possibleLanes.length > 0) {
+            this.currentLane =
+              possibleLanes[Math.floor(Math.random() * possibleLanes.length)];
+            this.targetX = CONFIG.LANES[this.currentLane];
+          }
+        }
+
+        Destroy() {
+          this.scene.remove(this.mesh);
+        }
+      }
+
+      /* =========================================================================
+       MODULE: SOUND ENGINE
+       ========================================================================= */
+      const SoundEngine = {
+        ctx: null,
+        engineOsc: null,
+        engineGain: null,
+        isInitialized: false,
+
+        Init() {
+          if (this.isInitialized) return;
+          const AudioCtx = window.AudioContext || window.webkitAudioContext;
+          this.ctx = new AudioCtx();
+
+          this.engineOsc = this.ctx.createOscillator();
+          this.engineGain = this.ctx.createGain();
+          this.engineOsc.type = "sawtooth";
+          this.engineOsc.frequency.setValueAtTime(40, this.ctx.currentTime);
+          this.engineGain.gain.setValueAtTime(0, this.ctx.currentTime);
+
+          this.engineOsc.connect(this.engineGain);
+          this.engineGain.connect(this.ctx.destination);
+          this.engineOsc.start();
+
+          this.isInitialized = true;
+        },
+
+        UpdateEngine(speedRatio) {
+          if (!this.isInitialized || !this.ctx) return;
+          const targetFreq = 40 + speedRatio * 140;
+          const targetGain = 0.03 + speedRatio * 0.08;
+          this.engineOsc.frequency.setTargetAtTime(
+            targetFreq,
+            this.ctx.currentTime,
+            0.1,
+          );
+          this.engineGain.gain.setTargetAtTime(
+            targetGain,
+            this.ctx.currentTime,
+            0.1,
+          );
+        },
+
+        StopEngine() {
+          if (!this.isInitialized || !this.engineGain) return;
+          this.engineGain.gain.setTargetAtTime(0, this.ctx.currentTime, 0.1);
+        },
+
+        PlayCollision() {
+          if (!this.isInitialized) return;
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+          osc.type = "square";
+          osc.frequency.setValueAtTime(120, this.ctx.currentTime);
+          osc.frequency.exponentialRampToValueAtTime(
+            30,
+            this.ctx.currentTime + 0.3,
+          );
+
+          gain.gain.setValueAtTime(0.3, this.ctx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(
+            0.01,
+            this.ctx.currentTime + 0.3,
+          );
+
+          osc.connect(gain);
+          gain.connect(this.ctx.destination);
+          osc.start();
+          osc.stop(this.ctx.currentTime + 0.3);
+        },
+
+        PlayHorn() {
+          if (!this.isInitialized) return;
+          const osc1 = this.ctx.createOscillator();
+          const osc2 = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+
+          osc1.type = "triangle";
+          osc2.type = "triangle";
+          osc1.frequency.setValueAtTime(400, this.ctx.currentTime);
+          osc2.frequency.setValueAtTime(500, this.ctx.currentTime);
+
+          gain.gain.setValueAtTime(0.15, this.ctx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(
+            0.01,
+            this.ctx.currentTime + 0.5,
+          );
+
+          osc1.connect(gain);
+          osc2.connect(gain);
+          gain.connect(this.ctx.destination);
+
+          osc1.start();
+          osc2.start();
+          osc1.stop(this.ctx.currentTime + 0.5);
+          osc2.stop(this.ctx.currentTime + 0.5);
+        },
+
+        PlayLaybyBell() {
+          if (!this.isInitialized) return;
+          const now = this.ctx.currentTime;
+          [523.25, 659.25].forEach((freq, idx) => {
+            const osc = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+            osc.type = "sine";
+            osc.frequency.setValueAtTime(freq, now + idx * 0.15);
+            gain.gain.setValueAtTime(0.2, now + idx * 0.15);
+            gain.gain.exponentialRampToValueAtTime(
+              0.001,
+              now + idx * 0.15 + 0.6,
+            );
+
+            osc.connect(gain);
+            gain.connect(this.ctx.destination);
+            osc.start(now + idx * 0.15);
+            osc.stop(now + idx * 0.15 + 0.6);
+          });
+        },
+
+        PlayCelebrationFanfare() {
+          if (!this.isInitialized) return;
+          const now = this.ctx.currentTime;
+          const notes = [440, 554.37, 659.25, 880];
+          notes.forEach((freq, idx) => {
+            const osc = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+            osc.type = "triangle";
+            osc.frequency.setValueAtTime(freq, now + idx * 0.12);
+            gain.gain.setValueAtTime(0.2, now + idx * 0.12);
+            gain.gain.exponentialRampToValueAtTime(
+              0.001,
+              now + idx * 0.12 + 0.8,
+            );
+
+            osc.connect(gain);
+            gain.connect(this.ctx.destination);
+            osc.start(now + idx * 0.12);
+            osc.stop(now + idx * 0.12 + 0.8);
+          });
+        },
+      };
+
+      /* =========================================================================
+       MODULE: GEOLOCATION, ROUTING & WEATHER SERVICE
+       ========================================================================= */
+      const GeoService = {
+        async GetUserPosition() {
+          return new Promise((resolve) => {
+            if (!navigator.geolocation) {
+              resolve({ lat: CONFIG.DEFAULT_LAT, lon: CONFIG.DEFAULT_LON });
+              return;
+            }
+            navigator.geolocation.getCurrentPosition(
+              (pos) =>
+                resolve({
+                  lat: pos.coords.latitude,
+                  lon: pos.coords.longitude,
+                }),
+              () =>
+                resolve({ lat: CONFIG.DEFAULT_LAT, lon: CONFIG.DEFAULT_LON }),
+              { timeout: 5000 },
+            );
+          });
+        },
+
+        async FetchLiveWeather(lat, lon) {
+          if (
+            !CONFIG.OPENWEATHER_API_KEY ||
+            CONFIG.OPENWEATHER_API_KEY === "YOUR_OPENWEATHERMAP_API_KEY"
+          ) {
+            return "Clear";
+          }
+          try {
+            const res = await fetch(
+              `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${CONFIG.OPENWEATHER_API_KEY}`,
+            );
+            if (!res.ok) throw new Error("Weather Request Failed");
+            const data = await res.json();
+            return data.weather[0].main;
+          } catch (e) {
+            console.warn("Weather API fallback applied:", e);
+            return "Clear";
+          }
+        },
+
+        GenerateOffsetCoord(lat, lon, radiusMeters) {
+          const r = (radiusMeters / 111320) * Math.sqrt(Math.random());
+          const theta = Math.random() * 2 * Math.PI;
+          return {
+            lat: lat + r * Math.cos(theta),
+            lon: lon + (r * Math.sin(theta)) / Math.cos(lat * (Math.PI / 180)),
+          };
+        },
+
+        async FetchRoute(start, end) {
+          const url = `https://api.openrouteservice.org/v2/directions/driving-car?api_key=${CONFIG.ORS_API_KEY}&start=${start.lon},${start.lat}&end=${end.lon},${end.lat}`;
+          try {
+            const res = await fetch(url);
+            if (!res.ok) throw new Error("Route API Request Failed");
+            const data = await res.json();
+            const route = data.features[0];
+
+            return {
+              coords: route.geometry.coordinates.map((c) => [c[1], c[0]]),
+              distance: route.properties.summary.distance,
+              duration: route.properties.summary.duration,
+            };
+          } catch (err) {
+            console.warn("ORS Routing Fallback applied:", err);
+            const dist = MapUtils.HaversineDistance(start, end);
+            return {
+              coords: [
+                [start.lat, start.lon],
+                [end.lat, end.lon],
+              ],
+              distance: dist,
+              duration: dist / 10,
+            };
+          }
+        },
+      };
+
+      const MapUtils = {
+        FormatTime(totalSeconds) {
+          const secs = Math.max(0, Math.ceil(totalSeconds));
+          const m = Math.floor(secs / 60);
+          const s = secs % 60;
+          return `${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
+        },
+
+        HaversineDistance(c1, c2) {
+          const R = 6371000;
+          const dLat = ((c2.lat - c1.lat) * Math.PI) / 180;
+          const dLon = ((c2.lon - c1.lon) * Math.PI) / 180;
+          const a =
+            Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+            Math.cos((c1.lat * Math.PI) / 180) *
+              Math.cos((c2.lat * Math.PI) / 180) *
+              Math.sin(dLon / 2) *
+              Math.sin(dLon / 2);
+          return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        },
+
+        InterpolatePosition(coords, cumDistances, targetDist) {
+          if (targetDist <= 0) return coords[0];
+          if (targetDist >= cumDistances[cumDistances.length - 1])
+            return coords[coords.length - 1];
+
+          for (let i = 0; i < cumDistances.length - 1; i++) {
+            if (
+              targetDist >= cumDistances[i] &&
+              targetDist <= cumDistances[i + 1]
+            ) {
+              const segLength = cumDistances[i + 1] - cumDistances[i];
+              const t =
+                segLength === 0
+                  ? 0
+                  : (targetDist - cumDistances[i]) / segLength;
+              return [
+                coords[i][0] + (coords[i + 1][0] - coords[i][0]) * t,
+                coords[i][1] + (coords[i + 1][1] - coords[i][1]) * t,
+              ];
+            }
+          }
+          return coords[0];
+        },
+      };
+
+      /* =========================================================================
+       MODULE: LEAFLET REAL-WORLD MINIMAP
+       ========================================================================= */
+      const Minimap = {
+        map: null,
+        playerMarker: null,
+        routePolyline: null,
+        startMarker: null,
+        endMarker: null,
+
+        Init() {
+          this.map = L.map("minimap", {
+            zoomControl: false,
+            attributionControl: false,
+            dragging: false,
+            touchZoom: false,
+            scrollWheelZoom: false,
+          }).setView([CONFIG.DEFAULT_LAT, CONFIG.DEFAULT_LON], 14);
+
+          L.tileLayer(
+            "https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png",
+            {
+              maxZoom: 19,
+            },
+          ).addTo(this.map);
+
+          const carIcon = L.divIcon({
+            className: "custom-car-icon",
+            html: `<div style="width:14px;height:14px;background:#38bdf8;border:2px solid white;border-radius:50%;box-shadow:0 0 8px #38bdf8;"></div>`,
+            iconSize: [14, 14],
+          });
+          this.playerMarker = L.marker(
+            [CONFIG.DEFAULT_LAT, CONFIG.DEFAULT_LON],
+            { icon: carIcon },
+          ).addTo(this.map);
+        },
+
+        Resize() {
+          if (this.map) setTimeout(() => this.map.invalidateSize(), 200);
+        },
+
+        SetRoute(coords) {
+          if (this.routePolyline) this.map.removeLayer(this.routePolyline);
+          if (this.startMarker) this.map.removeLayer(this.startMarker);
+          if (this.endMarker) this.map.removeLayer(this.endMarker);
+
+          this.routePolyline = L.polyline(coords, {
+            color: "#0284c7",
+            weight: 5,
+            opacity: 0.9,
+          }).addTo(this.map);
+
+          const startCoord = coords[0];
+          const endCoord = coords[coords.length - 1];
+
+          this.startMarker = L.circleMarker(startCoord, {
+            radius: 6,
+            color: "#22c55e",
+            fillColor: "#22c55e",
+            fillOpacity: 1,
+          }).addTo(this.map);
+          this.endMarker = L.circleMarker(endCoord, {
+            radius: 6,
+            color: "#ef4444",
+            fillColor: "#ef4444",
+            fillOpacity: 1,
+          }).addTo(this.map);
+
+          this.map.fitBounds(this.routePolyline.getBounds(), {
+            padding: [16, 16],
+          });
+        },
+
+        UpdatePosition(lat, lon) {
+          if (!this.map) return;
+          this.playerMarker.setLatLng([lat, lon]);
+          this.map.panTo([lat, lon], { animate: false });
+        },
+      };
+
+      /* =========================================================================
+       MODULE: PARTICLE ENGINE
+       ========================================================================= */
+      class ParticleSystem {
+        constructor(scene) {
+          this.scene = scene;
+          this.particles = [];
+          this.rainMesh = null;
+        }
+
+        InitRain() {
+          if (this.rainMesh) this.scene.remove(this.rainMesh);
+          const rainGeo = new THREE.BufferGeometry();
+          const count = 700;
+          const pos = new Float32Array(count * 3);
+
+          for (let i = 0; i < count * 3; i += 3) {
+            pos[i] = (Math.random() - 0.5) * 80;
+            pos[i + 1] = Math.random() * 40;
+            pos[i + 2] = (Math.random() - 0.5) * 200;
+          }
+
+          rainGeo.setAttribute("position", new THREE.BufferAttribute(pos, 3));
+          const rainMat = new THREE.PointsMaterial({
+            color: 0x38bdf8,
+            size: 0.25,
+            transparent: true,
+            opacity: 0.7,
+          });
+          this.rainMesh = new THREE.Points(rainGeo, rainMat);
+          this.scene.add(this.rainMesh);
+        }
+
+        EmitExhaust(pos) {
+          const pGeo = new THREE.SphereGeometry(0.15, 4, 4);
+          const pMat = new THREE.MeshBasicMaterial({
+            color: 0x94a3b8,
+            transparent: true,
+            opacity: 0.5,
+          });
+          const p = new THREE.Mesh(pGeo, pMat);
+          p.position.copy(pos);
+          p.position.x += (Math.random() - 0.5) * 0.4;
+          p.position.z -= 1.8;
+          this.scene.add(p);
+
+          this.particles.push({
+            mesh: p,
+            life: 0.5,
+            vel: new THREE.Vector3(
+              (Math.random() - 0.5) * 0.5,
+              Math.random() * 0.5,
+              -2,
+            ),
+          });
+        }
+
+        EmitSparks(pos) {
+          for (let i = 0; i < 14; i++) {
+            const pGeo = new THREE.BoxGeometry(0.1, 0.1, 0.1);
+            const pMat = new THREE.MeshBasicMaterial({ color: 0xf59e0b });
+            const p = new THREE.Mesh(pGeo, pMat);
+            p.position.copy(pos);
+            this.scene.add(p);
+
+            this.particles.push({
+              mesh: p,
+              life: 0.4,
+              vel: new THREE.Vector3(
+                (Math.random() - 0.5) * 15,
+                Math.random() * 8 + 2,
+                (Math.random() - 0.5) * 15,
+              ),
+            });
+          }
+        }
+
+        Update(delta, playerZ) {
+          if (this.rainMesh) {
+            const pos = this.rainMesh.geometry.attributes.position.array;
+            for (let i = 1; i < pos.length; i += 3) {
+              pos[i] -= 50 * delta;
+              if (pos[i] < 0) pos[i] = 40;
+            }
+            this.rainMesh.position.z = playerZ;
+            this.rainMesh.geometry.attributes.position.needsUpdate = true;
+          }
+
+          for (let i = this.particles.length - 1; i >= 0; i--) {
+            const p = this.particles[i];
+            p.life -= delta;
+            p.mesh.position.addScaledVector(p.vel, delta);
+            p.mesh.scale.multiplyScalar(0.95);
+
+            if (p.life <= 0) {
+              this.scene.remove(p.mesh);
+              this.particles.splice(i, 1);
+            }
+          }
+        }
+      }
+
+      /* =========================================================================
+       MODULE: THREE.JS GRAPHICS & ENGINE
+       ========================================================================= */
+      const Engine3D = {
+        scene: null,
+        camera: null,
+        renderer: null,
+        playerMesh: null,
+        headlights: [],
+        packageMesh: null,
+        npcVehicles: [],
+        roadMesh: null,
+        roadMat: null,
+        roadTexture: null,
+        zoneMesh: null,
+        dirLight: null,
+        ambientLight: null,
+        particles: null,
+        targetLaneIndex: 1,
+        input: { gas: false, brake: false },
+
+        Init() {
+          const canvas = document.getElementById("three-canvas");
+
+          this.scene = new THREE.Scene();
+          this.camera = new THREE.PerspectiveCamera(
+            60,
+            window.innerWidth / window.innerHeight,
+            0.1,
+            1000,
+          );
+          this.camera.position.set(0, 5, -10);
+
+          this.renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+          this.renderer.setSize(window.innerWidth, window.innerHeight);
+          this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+          this.ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
+          this.scene.add(this.ambientLight);
+          this.dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
+          this.dirLight.position.set(20, 40, -20);
+          this.scene.add(this.dirLight);
+
+          this.particles = new ParticleSystem(this.scene);
+
+          this.BuildEnvironment();
+          this.BuildPlayerVehicle();
+          this.BuildStationZoneMarker();
+          this.SetupControls();
+
+          window.addEventListener("resize", () => this.OnWindowResize());
+        },
+
+        CreateRoadTexture() {
+          const cvs = document.createElement("canvas");
+          cvs.width = 512;
+          cvs.height = 512;
+          const ctx = cvs.getContext("2d");
+
+          // Asphalt Base
+          ctx.fillStyle = "#2d3748";
+          ctx.fillRect(0, 0, 512, 512);
+
+          // Solid Yellow Shoulder Lines
+          ctx.fillStyle = "#eab308";
+          ctx.fillRect(16, 0, 10, 512);
+          ctx.fillRect(486, 0, 10, 512);
+
+          // Broken White Lane Demarcations
+          ctx.fillStyle = "#ffffff";
+          const dashLen = 40;
+          const gapLen = 40;
+          for (let y = 0; y < 512; y += dashLen + gapLen) {
+            ctx.fillRect(175, y, 8, dashLen); // Left-Mid Lane
+            ctx.fillRect(329, y, 8, dashLen); // Mid-Right Lane
+          }
+
+          const texture = new THREE.CanvasTexture(cvs);
+          texture.wrapS = THREE.RepeatWrapping;
+          texture.wrapT = THREE.RepeatWrapping;
+          texture.repeat.set(1, 20);
+          return texture;
+        },
+
+        ApplyTimeAndWeatherAmbiance(weather) {
+          const hour = new Date().getHours();
+          let skyColor, lightColor, ambientIntensity, fogDensity;
+
+          if (hour >= 6 && hour < 11) {
+            skyColor = 0xbae6fd;
+            lightColor = 0xfef08a;
+            ambientIntensity = 0.85;
+            GameState.timeOfDayLabel = "Morning";
+            GameState.isNight = false;
+          } else if (hour >= 11 && hour < 17) {
+            skyColor = 0x38bdf8;
+            lightColor = 0xffffff;
+            ambientIntensity = 1.0;
+            GameState.timeOfDayLabel = "Daytime";
+            GameState.isNight = false;
+          } else if (hour >= 17 && hour < 19) {
+            skyColor = 0x7c2d12;
+            lightColor = 0xf97316;
+            ambientIntensity = 0.6;
+            GameState.timeOfDayLabel = "Sunset";
+            GameState.isNight = false;
+          } else {
+            skyColor = 0x020617;
+            lightColor = 0x38bdf8;
+            ambientIntensity = 0.25;
+            GameState.timeOfDayLabel = "Night";
+            GameState.isNight = true;
+          }
+
+          fogDensity = GameState.isNight ? 0.015 : 0.008;
+
+          GameState.weatherCondition = weather;
+          if (weather === "Clouds" || weather === "Mist") {
+            skyColor = GameState.isNight ? 0x0f172a : 0x94a3b8;
+            ambientIntensity *= 0.7;
+            fogDensity += 0.01;
+          } else if (
+            weather === "Rain" ||
+            weather === "Drizzle" ||
+            weather === "Thunderstorm"
+          ) {
+            skyColor = GameState.isNight ? 0x020617 : 0x475569;
+            ambientIntensity *= 0.5;
+            fogDensity += 0.018;
+            this.roadMat.roughness = 0.1;
+            this.particles.InitRain();
+          } else {
+            this.roadMat.roughness = 0.8;
+          }
+
+          this.scene.background = new THREE.Color(skyColor);
+          this.scene.fog = new THREE.FogExp2(skyColor, fogDensity);
+          this.ambientLight.color.setHex(lightColor);
+          this.ambientLight.intensity = ambientIntensity;
+
+          this.headlights.forEach((hl) => (hl.visible = GameState.isNight));
+        },
+
+        BuildEnvironment() {
+          this.roadTexture = this.CreateRoadTexture();
+          const roadGeo = new THREE.PlaneGeometry(CONFIG.ROAD_WIDTH + 6, 500);
+          this.roadMat = new THREE.MeshStandardMaterial({
+            map: this.roadTexture,
+            roughness: 0.8,
+          });
+          this.roadMesh = new THREE.Mesh(roadGeo, this.roadMat);
+          this.roadMesh.rotation.x = -Math.PI / 2;
+          this.roadMesh.position.z = 200;
+          this.scene.add(this.roadMesh);
+
+          const groundGeo = new THREE.PlaneGeometry(1000, 1000);
+          const groundMat = new THREE.MeshBasicMaterial({ color: 0x022c22 });
+          const ground = new THREE.Mesh(groundGeo, groundMat);
+          ground.rotation.x = -Math.PI / 2;
+          ground.position.y = -0.1;
+          this.scene.add(ground);
+        },
+
+        BuildPlayerVehicle() {
+          const carGroup = new THREE.Group();
+
+          const bodyGeo = new THREE.BoxGeometry(2.2, 1, 4);
+          const bodyMat = new THREE.MeshStandardMaterial({
+            color: 0x38bdf8,
+            roughness: 0.3,
+            metalness: 0.4,
+          });
+          const body = new THREE.Mesh(bodyGeo, bodyMat);
+          body.position.y = 0.6;
+          carGroup.add(body);
+
+          const cabinGeo = new THREE.BoxGeometry(1.7, 0.7, 2);
+          const cabinMat = new THREE.MeshStandardMaterial({
+            color: 0x0f172a,
+            roughness: 0.1,
+          });
+          const cabin = new THREE.Mesh(cabinGeo, cabinMat);
+          cabin.position.set(0, 1.35, -0.2);
+          carGroup.add(cabin);
+
+          [-0.7, 0.7].forEach((x) => {
+            const hl = new THREE.SpotLight(0xffffff, 2, 40, Math.PI / 6, 0.5);
+            hl.position.set(x, 0.8, 1.8);
+            hl.target.position.set(x, 0, 20);
+            carGroup.add(hl);
+            carGroup.add(hl.target);
+            this.headlights.push(hl);
+          });
+
+          const pkgGeo = new THREE.BoxGeometry(1.2, 0.8, 1.2);
+          const pkgMat = new THREE.MeshStandardMaterial({
+            color: 0xd97706,
+            roughness: 0.8,
+          });
+          this.packageMesh = new THREE.Mesh(pkgGeo, pkgMat);
+          this.packageMesh.position.set(0, 2.0, -0.2);
+          this.packageMesh.visible = false;
+          carGroup.add(this.packageMesh);
+
+          this.playerMesh = carGroup;
+          this.playerMesh.position.set(CONFIG.LANES[1], 0, 0);
+          this.scene.add(this.playerMesh);
+        },
+
+        BuildStationZoneMarker() {
+          const zoneGeo = new THREE.PlaneGeometry(8, 16);
+          const zoneMat = new THREE.MeshBasicMaterial({
+            color: 0xf59e0b,
+            transparent: true,
+            opacity: 0.6,
+            side: THREE.DoubleSide,
+          });
+          this.zoneMesh = new THREE.Mesh(zoneGeo, zoneMat);
+          this.zoneMesh.rotation.x = -Math.PI / 2;
+          this.zoneMesh.position.set(CONFIG.LAYBY_X, 0.05, 0);
+          this.zoneMesh.visible = false;
+          this.scene.add(this.zoneMesh);
+        },
+
+        UpdateStationZone(targetZ, phase) {
+          this.zoneMesh.position.z = targetZ;
+          this.zoneMesh.visible = true;
+
+          if (phase === "PICKUP") {
+            this.zoneMesh.material.color.setHex(0xf59e0b); // Orange/Yellow for Pickup
+            this.zoneMesh.position.x = CONFIG.LAYBY_X;
+          } else {
+            this.zoneMesh.material.color.setHex(0x22c55e); // Green for Delivery Drop-off
+            this.zoneMesh.position.x = CONFIG.LANES[1];
+          }
+        },
+
+        SpawnNPC() {
+          if (this.npcVehicles.length >= 5) return;
+          const lane = Math.floor(Math.random() * CONFIG.LANES.length);
+          const startZ = this.playerMesh.position.z + 110 + Math.random() * 50;
+          const npc = new NPCVehicle(this.scene, lane, startZ);
+          this.npcVehicles.push(npc);
+        },
+
+        SetupControls() {
+          window.addEventListener("keydown", (e) => {
+            SoundEngine.Init();
+            if (e.key === "a" || e.key === "A" || e.key === "ArrowLeft")
+              this.ShiftLane(-1);
+            if (e.key === "d" || e.key === "D" || e.key === "ArrowRight")
+              this.ShiftLane(1);
+            if (e.key === "w" || e.key === "W" || e.key === "ArrowUp")
+              this.input.gas = true;
+            if (e.key === "s" || e.key === "S" || e.key === "ArrowDown")
+              this.input.brake = true;
+          });
+
+          window.addEventListener("keyup", (e) => {
+            if (e.key === "w" || e.key === "W" || e.key === "ArrowUp")
+              this.input.gas = false;
+            if (e.key === "s" || e.key === "S" || e.key === "ArrowDown")
+              this.input.brake = false;
+          });
+
+          const bindTouch = (id, onStart, onEnd) => {
+            const el = document.getElementById(id);
+            el.addEventListener("touchstart", (e) => {
+              e.preventDefault();
+              SoundEngine.Init();
+              onStart();
+            });
+            el.addEventListener("touchend", (e) => {
+              e.preventDefault();
+              onEnd();
+            });
+            el.addEventListener("mousedown", () => {
+              SoundEngine.Init();
+              onStart();
+            });
+            el.addEventListener("mouseup", onEnd);
+          };
+
+          bindTouch(
+            "btn-left",
+            () => this.ShiftLane(-1),
+            () => {},
+          );
+          bindTouch(
+            "btn-right",
+            () => this.ShiftLane(1),
+            () => {},
+          );
+          bindTouch(
+            "btn-gas",
+            () => (this.input.gas = true),
+            () => (this.input.gas = false),
+          );
+          bindTouch(
+            "btn-brake",
+            () => (this.input.brake = true),
+            () => (this.input.brake = false),
+          );
+        },
+
+        ShiftLane(dir) {
+          if (!GameState.isGameRunning || GameState.currentPhase === "LAYBY")
+            return;
+          this.targetLaneIndex = THREE.MathUtils.clamp(
+            this.targetLaneIndex + dir,
+            0,
+            CONFIG.LANES.length - 1,
+          );
+        },
+
+        Update(delta) {
+          if (!GameState.isGameRunning) return;
+
+          if (GameState.currentPhase !== "LAYBY") {
+            if (this.input.gas) {
+              GameState.currentSpeed = Math.min(
+                CONFIG.MAX_SPEED,
+                GameState.currentSpeed + CONFIG.ACCELERATION * delta,
+              );
+              this.particles.EmitExhaust(this.playerMesh.position);
+            } else if (this.input.brake) {
+              GameState.currentSpeed = Math.max(
+                0,
+                GameState.currentSpeed - CONFIG.BRAKE_FORCE * delta,
+              );
+            } else {
+              GameState.currentSpeed = Math.max(
+                0,
+                GameState.currentSpeed - CONFIG.DECELERATION * delta,
+              );
+            }
+          } else {
+            GameState.currentSpeed = Math.max(
+              0,
+              GameState.currentSpeed - CONFIG.BRAKE_FORCE * 1.5 * delta,
+            );
+          }
+
+          SoundEngine.UpdateEngine(GameState.currentSpeed / CONFIG.MAX_SPEED);
+
+          if (Math.random() < 0.003) SoundEngine.PlayHorn();
+
+          const distDelta = GameState.currentSpeed * delta;
+          GameState.distanceTraveled += distDelta;
+          this.playerMesh.position.z += distDelta;
+
+          // Animate Road Texture to simulate speed
+          if (this.roadTexture) {
+            this.roadTexture.offset.y -= (GameState.currentSpeed * delta) / 25;
+          }
+
+          let targetX = CONFIG.LANES[this.targetLaneIndex];
+          if (GameState.currentPhase === "LAYBY") targetX = CONFIG.LAYBY_X;
+
+          this.playerMesh.position.x = THREE.MathUtils.lerp(
+            this.playerMesh.position.x,
+            targetX,
+            delta * 8,
+          );
+
+          this.camera.position.z = this.playerMesh.position.z - 10;
+          this.camera.position.x = THREE.MathUtils.lerp(
+            this.camera.position.x,
+            this.playerMesh.position.x * 0.5,
+            delta * 5,
+          );
+          this.camera.lookAt(
+            this.playerMesh.position.x,
+            1,
+            this.playerMesh.position.z + 15,
+          );
+
+          if (this.roadMesh.position.z < this.playerMesh.position.z + 100) {
+            this.roadMesh.position.z += 100;
+          }
+
+          // Spawn Reactive Traffic
+          if (Math.random() < 0.03 && GameState.currentPhase !== "LAYBY")
+            this.SpawnNPC();
+
+          // Update NPC Vehicles & Continuous Collision Check
+          const playerBB = new THREE.Box3().setFromObject(this.playerMesh);
+
+          for (let i = this.npcVehicles.length - 1; i >= 0; i--) {
+            const npc = this.npcVehicles[i];
+            npc.Update(delta, this.playerMesh.position.z, this.targetLaneIndex);
+
+            const npcBB = new THREE.Box3().setFromObject(npc.mesh);
+
+            if (playerBB.intersectsBox(npcBB)) {
+              // Register collision continuously whenever cooldown expires (0.3s interval)
+              if (npc.hitCooldown <= 0) {
+                npc.hitCooldown = 0.3; // Reset hit cooldown for multi-impact registration
+
+                SoundEngine.PlayCollision();
+                this.particles.EmitSparks(this.playerMesh.position);
+                GameState.currentSpeed = Math.max(
+                  0,
+                  GameState.currentSpeed - 14,
+                );
+                this.playerMesh.position.z -= 1.2;
+
+                GameState.damage = Math.min(100, GameState.damage + 15);
+
+                const dmgHud = document.getElementById("hud-damage");
+                dmgHud.innerText = `${GameState.damage}%`;
+                dmgHud.style.color =
+                  GameState.damage > 60
+                    ? "#ef4444"
+                    : GameState.damage > 30
+                      ? "#f59e0b"
+                      : "#22c55e";
+
+                if (GameState.damage >= 100) {
+                  App.EndGame(
+                    false,
+                    "Vehicle Totaled! Excessive collision damage.",
+                  );
+                  return;
+                }
+              }
+            }
+
+            if (npc.mesh.position.z < this.playerMesh.position.z - 15) {
+              npc.Destroy();
+              this.npcVehicles.splice(i, 1);
+            }
+          }
+
+          this.particles.Update(delta, this.playerMesh.position.z);
+          this.renderer.render(this.scene, this.camera);
+        },
+
+        OnWindowResize() {
+          this.camera.aspect = window.innerWidth / window.innerHeight;
+          this.camera.updateProjectionMatrix();
+          this.renderer.setSize(window.innerWidth, window.innerHeight);
+        },
+
+        Reset() {
+          this.npcVehicles.forEach((n) => n.Destroy());
+          this.npcVehicles = [];
+          this.targetLaneIndex = 1;
+          this.packageMesh.visible = false;
+          this.zoneMesh.visible = false;
+          this.playerMesh.position.set(CONFIG.LANES[1], 0, 0);
+          this.camera.position.set(0, 5, -10);
+        },
+      };
+
+      /* =========================================================================
+       MODULE: APP FLOW CONTROLLER
+       ========================================================================= */
+      const App = {
+        lastFrameTime: performance.now(),
+
+        Init() {
+          Minimap.Init();
+          Engine3D.Init();
+
+          document
+            .getElementById("btn-play")
+            .addEventListener("click", () => this.ShowJobSelection());
+          document
+            .getElementById("btn-retry")
+            .addEventListener("click", () => this.RetryJob());
+          document
+            .getElementById("btn-next-job")
+            .addEventListener("click", () => this.ShowJobSelection());
+          document
+            .getElementById("btn-resume")
+            .addEventListener("click", () => this.ResumeFromLayby());
+
+          this.Loop();
+        },
+
+        async ShowJobSelection() {
+          this.SwitchScreen("screen-jobs");
+          const jobContainer = document.getElementById("job-list");
+          jobContainer.innerHTML = `<div style="color:#94a3b8;">Locating GPS, weather & local hubs...</div>`;
+
+          GameState.userCoords = await GeoService.GetUserPosition();
+
+          const weather = await GeoService.FetchLiveWeather(
+            GameState.userCoords.lat,
+            GameState.userCoords.lon,
+          );
+          Engine3D.ApplyTimeAndWeatherAmbiance(weather);
+
+          const envLabel = `${GameState.weatherCondition} / ${GameState.timeOfDayLabel}`;
+          document.getElementById("hud-env").innerText = envLabel;
+
+          // Generate Real Local Jobs (Magboro / Ikeja Corridor)
+          const jobs = [
+            {
+              title: "Local Pickup ➔ Ikeja Hub",
+              pickupName: "Magboro Local Waypoint",
+              dropoffName: LOCAL_HUBS[1].name,
+              pickup: GeoService.GenerateOffsetCoord(
+                GameState.userCoords.lat,
+                GameState.userCoords.lon,
+                2000,
+              ),
+              dropoff: { lat: LOCAL_HUBS[1].lat, lon: LOCAL_HUBS[1].lon },
+            },
+            {
+              title: "Interstate Corridor: Berger ➔ Victoria Island",
+              pickupName: LOCAL_HUBS[3].name,
+              dropoffName: LOCAL_HUBS[2].name,
+              pickup: { lat: LOCAL_HUBS[3].lat, lon: LOCAL_HUBS[3].lon },
+              dropoff: { lat: LOCAL_HUBS[2].lat, lon: LOCAL_HUBS[2].lon },
+            },
+          ];
+
+          jobContainer.innerHTML = "";
+          jobs.forEach((job) => {
+            const card = document.createElement("div");
+            card.className = "job-card";
+            card.innerHTML = `
+            <div class="job-title">${job.title}</div>
+            <div class="job-meta">Pickup: ${job.pickupName}</div>
+            <div class="job-sub">Drop-off: ${job.dropoffName}</div>
+          `;
+            card.onclick = () => this.StartJob(job.pickup, job.dropoff);
+            jobContainer.appendChild(card);
+          });
+        },
+
+        async StartJob(pickup, dropoff) {
+          this.SwitchScreen("game-container");
+          Minimap.Resize();
+
+          Engine3D.Reset();
+
+          GameState.currentPhase = "PICKUP";
+          GameState.distanceTraveled = 0;
+          GameState.currentSpeed = 0;
+          GameState.damage = 0;
+          GameState.isGameRunning = false;
+
+          document.getElementById("hud-damage").innerText = "0%";
+          document.getElementById("hud-damage").style.color = "#22c55e";
+
+          const routeData = await GeoService.FetchRoute(
+            GameState.userCoords,
+            pickup,
+          );
+          this.SetupPhaseData(routeData);
+
+          GameState.activeJob = { pickup, dropoff };
+
+          Minimap.SetRoute(GameState.routePoints);
+          Minimap.UpdatePosition(
+            GameState.userCoords.lat,
+            GameState.userCoords.lon,
+          );
+
+          Engine3D.UpdateStationZone(GameState.totalRouteDistance, "PICKUP");
+
+          GameState.isGameRunning = true;
+          document.getElementById("hud-status").innerText =
+            "Phase 1: Drive to Pickup";
+          document.getElementById("hud-status").style.color = "#f59e0b";
+        },
+
+        RetryJob() {
+          if (GameState.activeJob) {
+            this.StartJob(
+              GameState.activeJob.pickup,
+              GameState.activeJob.dropoff,
+            );
+          } else {
+            this.ShowJobSelection();
+          }
+        },
+
+        SetupPhaseData(routeData) {
+          GameState.routePoints = routeData.coords;
+          GameState.totalRouteDistance = routeData.distance;
+
+          let cum = [0];
+          for (let i = 1; i < routeData.coords.length; i++) {
+            const prev = {
+              lat: routeData.coords[i - 1][0],
+              lon: routeData.coords[i - 1][1],
+            };
+            const curr = {
+              lat: routeData.coords[i][0],
+              lon: routeData.coords[i][1],
+            };
+            cum.push(cum[i - 1] + MapUtils.HaversineDistance(prev, curr));
+          }
+          GameState.routeCumDistances = cum;
+          GameState.distanceTraveled = 0;
+
+          // Timer Reset: Allocate duration dynamically per phase
+          GameState.timeRemaining = Math.max(
+            40,
+            Math.round(routeData.duration * 1.1),
+          );
+        },
+
+        TriggerLaybyStop() {
+          GameState.currentPhase = "LAYBY";
+          SoundEngine.PlayLaybyBell();
+          document.getElementById("action-popup").classList.remove("hidden");
+          Engine3D.packageMesh.visible = true;
+        },
+
+        async ResumeFromLayby() {
+          document.getElementById("action-popup").classList.add("hidden");
+
+          document.getElementById("hud-status").innerText =
+            "Phase 2: Deliver to Drop-off";
+          document.getElementById("hud-status").style.color = "#38bdf8";
+
+          const routeData = await GeoService.FetchRoute(
+            GameState.activeJob.pickup,
+            GameState.activeJob.dropoff,
+          );
+          this.SetupPhaseData(routeData); // Timer resets here for Drop-off phase!
+
+          Minimap.SetRoute(GameState.routePoints);
+          Engine3D.UpdateStationZone(GameState.totalRouteDistance, "DROPOFF");
+
+          GameState.currentPhase = "DROPOFF";
+          Engine3D.targetLaneIndex = 1;
+        },
+
+        Loop() {
+          requestAnimationFrame(() => this.Loop());
+
+          const now = performance.now();
+          const delta = (now - this.lastFrameTime) / 1000;
+          this.lastFrameTime = now;
+
+          if (GameState.isGameRunning) {
+            Engine3D.Update(delta);
+
+            GameState.timeRemaining -= delta;
+            if (GameState.timeRemaining <= 0) {
+              this.EndGame(false, "Time expired before completing delivery!");
+              return;
+            }
+
+            const progressRatio = Math.min(
+              1,
+              GameState.distanceTraveled / (GameState.totalRouteDistance || 1),
+            );
+            const currentSimDistance =
+              progressRatio *
+              GameState.routeCumDistances[
+                GameState.routeCumDistances.length - 1
+              ];
+
+            const currentPos = MapUtils.InterpolatePosition(
+              GameState.routePoints,
+              GameState.routeCumDistances,
+              currentSimDistance,
+            );
+
+            Minimap.UpdatePosition(currentPos[0], currentPos[1]);
+
+            // Formatted Timer (mins:secs)
+            document.getElementById("hud-timer").innerText =
+              MapUtils.FormatTime(GameState.timeRemaining);
+            document.getElementById("hud-progress").innerText =
+              `${Math.round(progressRatio * 100)}%`;
+
+            if (progressRatio >= 1) {
+              if (GameState.currentPhase === "PICKUP") {
+                this.TriggerLaybyStop();
+              } else if (GameState.currentPhase === "DROPOFF") {
+                this.EndGame(true, "Package successfully delivered on time!");
+              }
+            }
+          }
+        },
+
+        EndGame(success, message) {
+          GameState.isGameRunning = false;
+
+          SoundEngine.StopEngine();
+
+          document.getElementById("gameover-title").innerText = success
+            ? "Delivery Success!"
+            : "Delivery Failed!";
+          document.getElementById("gameover-title").style.color = success
+            ? "#38bdf8"
+            : "#ef4444";
+          document.getElementById("gameover-msg").innerText = message;
+
+          document.getElementById("stat-dist").innerText =
+            `${(GameState.distanceTraveled / 1000).toFixed(2)} km`;
+          document.getElementById("stat-time").innerText = MapUtils.FormatTime(
+            GameState.timeRemaining,
+          );
+          document.getElementById("stat-damage").innerText =
+            `${GameState.damage}%`;
+          document.getElementById("stat-env").innerText =
+            `${GameState.weatherCondition} / ${GameState.timeOfDayLabel}`;
+
+          if (success) {
+            SoundEngine.PlayCelebrationFanfare();
+            if (typeof confetti === "function") {
+              confetti({
+                particleCount: 120,
+                spread: 80,
+                origin: { y: 0.6 },
+              });
+            }
+          }
+
+          document.getElementById("screen-gameover").classList.remove("hidden");
+        },
+
+        SwitchScreen(id) {
+          ["screen-home", "screen-jobs", "screen-gameover"].forEach((s) => {
+            document.getElementById(s).classList.add("hidden");
+          });
+          if (id !== "game-container") {
+            document.getElementById(id).classList.remove("hidden");
+          } else {
+            document
+              .getElementById("game-container")
+              .classList.remove("hidden");
+          }
+        },
+      };
+
+      window.addEventListener("DOMContentLoaded", () => App.Init());
+    </script>
+  </body>
+</html>
