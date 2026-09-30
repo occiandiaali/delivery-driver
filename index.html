@@ -7,7 +7,7 @@
       name="viewport"
       content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
     />
-    <title>Delivery Driver</title>
+    <title>Food Truck</title>
 
     <!-- Leaflet CSS -->
     <link
@@ -62,7 +62,7 @@
 
       .modal-card {
         background: rgba(30, 41, 59, 0.95);
-        border: 2px solid #38bdf8;
+        border: 2px solid #f59e0b;
         border-radius: 20px;
         padding: 28px 24px;
         width: 90%;
@@ -73,7 +73,7 @@
 
       h1 {
         font-size: 1.8rem;
-        color: #38bdf8;
+        color: #f59e0b;
         margin-bottom: 8px;
       }
       p {
@@ -91,25 +91,31 @@
       }
 
       .btn {
-        background: #6cac06;
-        color: #fff;
+        background: #f59e0b;
+        color: #0f172a;
         border: none;
         padding: 12px 20px;
         font-size: 0.95rem;
         font-weight: bold;
         border-radius: 12px;
         cursor: pointer;
-        box-shadow: 0 4px 14px rgba(2, 132, 199, 0.4);
+        box-shadow: 0 4px 14px rgba(245, 158, 11, 0.4);
         transition:
           transform 0.1s,
           background 0.2s;
       }
       .btn:active {
         transform: scale(0.96);
-        background: #0369a1;
+        background: #d97706;
+      }
+      .btn:disabled {
+        background: #475569;
+        opacity: 0.6;
+        cursor: not-allowed;
       }
       .btn-secondary {
         background: #334155;
+        color: #fff;
         box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
       }
       .btn-secondary:active {
@@ -160,7 +166,7 @@
       }
       .job-card:hover,
       .job-card:active {
-        border-color: #38bdf8;
+        border-color: #f59e0b;
       }
       .job-title {
         font-weight: bold;
@@ -169,12 +175,30 @@
       }
       .job-meta {
         font-size: 0.85rem;
-        color: #38bdf8;
+        color: #f59e0b;
         margin-bottom: 2px;
       }
       .job-sub {
         font-size: 0.8rem;
         color: #94a3b8;
+      }
+
+      .spinner {
+        border: 4px solid rgba(255, 255, 255, 0.1);
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        border-left-color: #f59e0b;
+        animation: spin 1s linear infinite;
+        margin: 16px auto;
+      }
+      @keyframes spin {
+        0% {
+          transform: rotate(0deg);
+        }
+        100% {
+          transform: rotate(360deg);
+        }
       }
 
       #game-container {
@@ -198,7 +222,7 @@
         width: 150px;
         height: 150px;
         border-radius: 16px;
-        border: 3px solid rgba(56, 189, 248, 0.6);
+        border: 3px solid rgba(245, 158, 11, 0.6);
         overflow: hidden;
         box-shadow: 0 8px 20px rgba(0, 0, 0, 0.5);
         z-index: 5;
@@ -222,7 +246,7 @@
         display: flex;
         flex-direction: column;
         gap: 4px;
-        min-width: 180px;
+        min-width: 190px;
       }
       .hud-row {
         display: flex;
@@ -245,7 +269,7 @@
         left: 50%;
         transform: translate(-50%, -50%);
         background: rgba(15, 23, 42, 0.95);
-        border: 2px solid #38bdf8;
+        border: 2px solid #f59e0b;
         border-radius: 16px;
         padding: 24px;
         z-index: 8;
@@ -286,18 +310,15 @@
         touch-action: manipulation;
       }
       .control-btn:active {
-        background: rgba(56, 189, 248, 0.5);
+        background: rgba(245, 158, 11, 0.5);
       }
     </style>
   </head>
   <body>
     <!-- Home Screen -->
     <div id="screen-home" class="screen">
-      <h1>Delivery Driver</h1>
-      <p>
-        Deliver packages across real local landmarks with live weather and
-        traffic!
-      </p>
+      <h1>Food Truck</h1>
+      <p>Deliver hot, fresh meals across local spots before they go stale!</p>
       <button id="btn-play" class="btn" style="max-width: 280px">
         PLAY NOW
       </button>
@@ -305,18 +326,21 @@
 
     <!-- Job Selection Screen -->
     <div id="screen-jobs" class="screen hidden">
-      <h1>Available Jobs</h1>
-      <p>Select a delivery request near your current position:</p>
+      <h1>Available Orders</h1>
+      <p>Select a hot meal delivery within 3 KM of your kitchen:</p>
       <div id="job-list" class="job-list">
-        <div style="color: #94a3b8">Locating GPS, weather & local hubs...</div>
+        <div class="spinner"></div>
+        <div style="color: #94a3b8; margin-top: 8px">
+          Locating nearby kitchens...
+        </div>
       </div>
     </div>
 
-    <!-- Transparent Game Over / Mission Summary Overlay -->
+    <!-- Transparent Game Over / Summary Overlay -->
     <div id="screen-gameover" class="screen hidden">
       <div class="modal-card">
         <h1 id="gameover-title">Delivery Success!</h1>
-        <p id="gameover-msg">Package successfully delivered on time.</p>
+        <p id="gameover-msg">All food orders delivered hot and fresh!</p>
 
         <div class="stats-grid">
           <div class="stat-box">
@@ -324,26 +348,22 @@
             <span id="stat-dist" class="stat-value">0 km</span>
           </div>
           <div class="stat-box">
-            <span class="stat-label">Time Remaining</span>
+            <span class="stat-label">Freshness Time</span>
             <span id="stat-time" class="stat-value">00:00</span>
           </div>
           <div class="stat-box">
-            <span class="stat-label">Vehicle Damage</span>
-            <span id="stat-damage" class="stat-value">0%</span>
+            <span class="stat-label">Truck Health</span>
+            <span id="stat-damage" class="stat-value">100%</span>
           </div>
           <div class="stat-box">
-            <span class="stat-label">Weather / Time</span>
-            <span id="stat-env" class="stat-value" style="font-size: 0.85rem"
-              >Clear / Day</span
-            >
+            <span class="stat-label">Fuel Left</span>
+            <span id="stat-fuel" class="stat-value">100%</span>
           </div>
         </div>
 
         <div class="btn-group">
-          <button id="btn-retry" class="btn btn-secondary">
-            RETRY DELIVERY
-          </button>
-          <button id="btn-next-job" class="btn">NEW JOB</button>
+          <button id="btn-retry" class="btn btn-secondary">RETRY RUN</button>
+          <button id="btn-next-job" class="btn">NEW ORDER</button>
         </div>
       </div>
     </div>
@@ -352,15 +372,18 @@
     <div id="game-container" class="hidden">
       <canvas id="three-canvas"></canvas>
 
-      <!-- Action Modal for Lay-by Stop -->
+      <!-- Action Modal for Lay-by Kitchen Pickup -->
       <div id="action-popup" class="hidden">
-        <h2 style="color: #38bdf8; margin-bottom: 8px">
-          Pickup Point Reached!
+        <h2 style="color: #f59e0b; margin-bottom: 8px" id="popup-title">
+          Kitchen Reached!
         </h2>
-        <p style="font-size: 0.85rem; color: #cbd5e1; margin-bottom: 16px">
-          Vehicle parked in lay-by. Package loaded onto roof!
+        <p
+          style="font-size: 0.85rem; color: #cbd5e1; margin-bottom: 16px"
+          id="popup-msg"
+        >
+          Hot meals loaded! Freshness timer starts now.
         </p>
-        <button id="btn-resume" class="btn">CONTINUE TO DROP-OFF</button>
+        <button id="btn-resume" class="btn">START DELIVERY RUN</button>
       </div>
 
       <!-- HUD -->
@@ -368,17 +391,19 @@
         <div>
           <div class="hud-label">Objective</div>
           <div id="hud-status" class="hud-item" style="color: #f59e0b">
-            Phase 1: Drive to Pickup
+            Phase 1: Drive to Kitchen
           </div>
         </div>
         <div class="hud-row" style="margin-top: 4px">
           <div>
-            <div class="hud-label">Time Left</div>
-            <div id="hud-timer" class="hud-item">00:00</div>
+            <div class="hud-label">Freshness Left</div>
+            <div id="hud-timer" class="hud-item">PAUSED</div>
           </div>
           <div>
-            <div class="hud-label">Progress</div>
-            <div id="hud-progress" class="hud-item">0%</div>
+            <div class="hud-label">Fuel</div>
+            <div id="hud-fuel" class="hud-item" style="color: #38bdf8">
+              100%
+            </div>
           </div>
         </div>
         <div class="hud-row" style="margin-top: 4px">
@@ -389,14 +414,8 @@
             </div>
           </div>
           <div>
-            <div class="hud-label">Weather / Time</div>
-            <div
-              id="hud-env"
-              class="hud-item"
-              style="color: #cbd5e1; font-size: 0.78rem"
-            >
-              Clear
-            </div>
+            <div class="hud-label">Orders Left</div>
+            <div id="hud-orders" class="hud-item" style="color: #eab308">1</div>
           </div>
         </div>
       </div>
@@ -431,45 +450,58 @@
       </div>
     </div>
 
-    <!-- External Configuration -->
-    <!-- <script src="/api/config.js"></script> -->
+    <!-- Fallback External Configuration -->
+    <!-- <script src="api/config.js"></script> -->
     <script src="config-example.js"></script>
+    <script>
+      if (typeof CONFIG === "undefined") {
+        window.CONFIG = {
+          ORS_API_KEY: "",
+          OPENWEATHER_API_KEY: "",
+          DEFAULT_LAT: 6.6853,
+          DEFAULT_LON: 3.4211,
+          ROAD_WIDTH: 14,
+          LANES: [-4, 0, 4],
+          LAYBY_X: 8,
+          MAX_SPEED: 28,
+          ACCELERATION: 12,
+          DECELERATION: 10,
+          BRAKE_FORCE: 25,
+        };
+      }
+    </script>
 
     <!-- External Libraries -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <!-- Confetti JS -->
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 
     <script>
       /* =========================================================================
-       GLOBAL STATE & LOCAL REGION HUBS
+       GLOBAL STATE
        ========================================================================= */
       const GameState = {
         userCoords: null,
         activeJob: null,
-        currentPhase: "PICKUP",
+        currentPhase: "PICKUP", // 'PICKUP', 'LAYBY', 'DROPOFF'
         distanceTraveled: 0,
         totalRouteDistance: 0,
         timeRemaining: 0,
         damage: 0,
+        fuel: 100,
         currentSpeed: 0,
         isGameRunning: false,
+        isTimerActive: false,
         routePoints: [],
         routeCumDistances: [],
         weatherCondition: "Clear",
         timeOfDayLabel: "Day",
         isNight: false,
+        packagesCount: 1,
+        currentDropoffIndex: 0,
+        dropoffLocations: [],
+        spinTimeRemaining: 0,
       };
-
-      // Pre-defined local landmark hubs (e.g. Magboro to Ikeja corridor)
-      const LOCAL_HUBS = [
-        { name: "Magboro, Ogun State", lat: 6.6853, lon: 3.4211 },
-        { name: "Ikeja, Lagos", lat: 6.6018, lon: 3.3515 },
-        { name: "Victoria Island, Lagos", lat: 6.4281, lon: 3.4219 },
-        { name: "Berger, Lagos", lat: 6.6521, lon: 3.3712 },
-        { name: "Lekki Phase 1, Lagos", lat: 6.4474, lon: 3.4723 },
-      ];
 
       /* =========================================================================
        CLASS: SMART REACTIVE NPC VEHICLE
@@ -478,11 +510,10 @@
         constructor(scene, laneIndex, startZ) {
           this.scene = scene;
           this.currentLane = laneIndex;
-          this.speed = 12 + Math.random() * 10; // NPC base speed (m/s)
+          this.speed = 12 + Math.random() * 10;
           this.targetX = CONFIG.LANES[laneIndex];
-          this.hitCooldown = 0; // Cooldown timer for continuous re-hits
+          this.hitCooldown = 0;
 
-          // Vehicle Mesh
           const geo = new THREE.BoxGeometry(2.2, 1.2, 3.8);
           const colors = [0xef4444, 0xeab308, 0xa855f7, 0x64748b, 0x10b981];
           const mat = new THREE.MeshStandardMaterial({
@@ -492,26 +523,18 @@
 
           this.mesh = new THREE.Mesh(geo, mat);
           this.mesh.position.set(this.targetX, 0.6, startZ);
-          this.mesh.userData = { type: "CAR" };
           this.scene.add(this.mesh);
         }
 
         Update(delta, playerZ, playerLane) {
-          if (this.hitCooldown > 0) {
-            this.hitCooldown -= delta;
-          }
-
-          // 1. Move Forward
+          if (this.hitCooldown > 0) this.hitCooldown -= delta;
           this.mesh.position.z += this.speed * delta;
-
-          // 2. Smooth Lane Interpolation
           this.mesh.position.x = THREE.MathUtils.lerp(
             this.mesh.position.x,
             this.targetX,
             delta * 5,
           );
 
-          // 3. Smart Reaction: If player approaches from behind in same lane, NPC changes lane
           const distToPlayer = this.mesh.position.z - playerZ;
           if (
             distToPlayer > 0 &&
@@ -541,6 +564,59 @@
       }
 
       /* =========================================================================
+       CLASS: ROAD OBSTACLE (OIL SLICK & BARRIERS)
+       ========================================================================= */
+      class RoadObstacle {
+        constructor(scene, type, laneIndex, startZ) {
+          this.scene = scene;
+          this.type = type; // 'OIL' or 'BARRIER'
+          this.laneIndex = laneIndex;
+          this.hit = false;
+
+          this.group = new THREE.Group();
+          const posX = CONFIG.LANES[laneIndex];
+
+          if (type === "OIL") {
+            const geo = new THREE.CircleGeometry(1.6, 16);
+            const mat = new THREE.MeshBasicMaterial({
+              color: 0x09090b,
+              side: THREE.DoubleSide,
+            });
+            const slick = new THREE.Mesh(geo, mat);
+            slick.rotation.x = -Math.PI / 2;
+            slick.position.y = 0.02;
+            this.group.add(slick);
+          } else {
+            // BARRIER
+            const geo = new THREE.BoxGeometry(2.2, 0.9, 0.4);
+            const mat = new THREE.MeshStandardMaterial({
+              color: 0xe11d48,
+              roughness: 0.5,
+            });
+            const barrier = new THREE.Mesh(geo, mat);
+            barrier.position.y = 0.45;
+            this.group.add(barrier);
+
+            // Stripe Details
+            const stripeGeo = new THREE.BoxGeometry(2.22, 0.3, 0.42);
+            const stripeMat = new THREE.MeshStandardMaterial({
+              color: 0xffffff,
+            });
+            const stripe = new THREE.Mesh(stripeGeo, stripeMat);
+            stripe.position.y = 0.45;
+            this.group.add(stripe);
+          }
+
+          this.group.position.set(posX, 0, startZ);
+          this.scene.add(this.group);
+        }
+
+        Destroy() {
+          this.scene.remove(this.group);
+        }
+      }
+
+      /* =========================================================================
        MODULE: SOUND ENGINE
        ========================================================================= */
       const SoundEngine = {
@@ -551,20 +627,24 @@
 
         Init() {
           if (this.isInitialized) return;
-          const AudioCtx = window.AudioContext || window.webkitAudioContext;
-          this.ctx = new AudioCtx();
+          try {
+            const AudioCtx = window.AudioContext || window.webkitAudioContext;
+            this.ctx = new AudioCtx();
 
-          this.engineOsc = this.ctx.createOscillator();
-          this.engineGain = this.ctx.createGain();
-          this.engineOsc.type = "sawtooth";
-          this.engineOsc.frequency.setValueAtTime(40, this.ctx.currentTime);
-          this.engineGain.gain.setValueAtTime(0, this.ctx.currentTime);
+            this.engineOsc = this.ctx.createOscillator();
+            this.engineGain = this.ctx.createGain();
+            this.engineOsc.type = "sawtooth";
+            this.engineOsc.frequency.setValueAtTime(40, this.ctx.currentTime);
+            this.engineGain.gain.setValueAtTime(0, this.ctx.currentTime);
 
-          this.engineOsc.connect(this.engineGain);
-          this.engineGain.connect(this.ctx.destination);
-          this.engineOsc.start();
+            this.engineOsc.connect(this.engineGain);
+            this.engineGain.connect(this.ctx.destination);
+            this.engineOsc.start();
 
-          this.isInitialized = true;
+            this.isInitialized = true;
+          } catch (e) {
+            console.warn("AudioContext failed:", e);
+          }
         },
 
         UpdateEngine(speedRatio) {
@@ -611,31 +691,27 @@
           osc.stop(this.ctx.currentTime + 0.3);
         },
 
-        PlayHorn() {
+        PlaySlickSound() {
           if (!this.isInitialized) return;
-          const osc1 = this.ctx.createOscillator();
-          const osc2 = this.ctx.createOscillator();
+          const osc = this.ctx.createOscillator();
           const gain = this.ctx.createGain();
-
-          osc1.type = "triangle";
-          osc2.type = "triangle";
-          osc1.frequency.setValueAtTime(400, this.ctx.currentTime);
-          osc2.frequency.setValueAtTime(500, this.ctx.currentTime);
-
-          gain.gain.setValueAtTime(0.15, this.ctx.currentTime);
-          gain.gain.exponentialRampToValueAtTime(
-            0.01,
-            this.ctx.currentTime + 0.5,
+          osc.type = "sine";
+          osc.frequency.setValueAtTime(300, this.ctx.currentTime);
+          osc.frequency.linearRampToValueAtTime(
+            150,
+            this.ctx.currentTime + 0.4,
           );
 
-          osc1.connect(gain);
-          osc2.connect(gain);
-          gain.connect(this.ctx.destination);
+          gain.gain.setValueAtTime(0.25, this.ctx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(
+            0.01,
+            this.ctx.currentTime + 0.4,
+          );
 
-          osc1.start();
-          osc2.start();
-          osc1.stop(this.ctx.currentTime + 0.5);
-          osc2.stop(this.ctx.currentTime + 0.5);
+          osc.connect(gain);
+          gain.connect(this.ctx.destination);
+          osc.start();
+          osc.stop(this.ctx.currentTime + 0.4);
         },
 
         PlayLaybyBell() {
@@ -683,50 +759,60 @@
       };
 
       /* =========================================================================
-       MODULE: GEOLOCATION, ROUTING & WEATHER SERVICE
+       MODULE: GEOLOCATION & ROUTING (RESTRICTED TO 3 KM RADIUS)
        ========================================================================= */
       const GeoService = {
         async GetUserPosition() {
           return new Promise((resolve) => {
+            const fallbackPos = {
+              lat: CONFIG.DEFAULT_LAT,
+              lon: CONFIG.DEFAULT_LON,
+            };
+
             if (!navigator.geolocation) {
-              resolve({ lat: CONFIG.DEFAULT_LAT, lon: CONFIG.DEFAULT_LON });
+              resolve(fallbackPos);
               return;
             }
+
+            let hasResolved = false;
+            const timer = setTimeout(() => {
+              if (!hasResolved) {
+                hasResolved = true;
+                resolve(fallbackPos);
+              }
+            }, 6000);
+
             navigator.geolocation.getCurrentPosition(
-              (pos) =>
-                resolve({
-                  lat: pos.coords.latitude,
-                  lon: pos.coords.longitude,
-                }),
-              () =>
-                resolve({ lat: CONFIG.DEFAULT_LAT, lon: CONFIG.DEFAULT_LON }),
-              { timeout: 5000 },
+              (pos) => {
+                if (!hasResolved) {
+                  hasResolved = true;
+                  clearTimeout(timer);
+                  resolve({
+                    lat: pos.coords.latitude,
+                    lon: pos.coords.longitude,
+                  });
+                }
+              },
+              () => {
+                if (!hasResolved) {
+                  hasResolved = true;
+                  clearTimeout(timer);
+                  resolve(fallbackPos);
+                }
+              },
+              { enableHighAccuracy: true, timeout: 5500, maximumAge: 10000 },
             );
           });
         },
 
-        async FetchLiveWeather(lat, lon) {
-          if (
-            !CONFIG.OPENWEATHER_API_KEY ||
-            CONFIG.OPENWEATHER_API_KEY === "YOUR_OPENWEATHERMAP_API_KEY"
-          ) {
-            return "Clear";
-          }
-          try {
-            const res = await fetch(
-              `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${CONFIG.OPENWEATHER_API_KEY}`,
-            );
-            if (!res.ok) throw new Error("Weather Request Failed");
-            const data = await res.json();
-            return data.weather[0].main;
-          } catch (e) {
-            console.warn("Weather API fallback applied:", e);
-            return "Clear";
-          }
-        },
-
-        GenerateOffsetCoord(lat, lon, radiusMeters) {
-          const r = (radiusMeters / 111320) * Math.sqrt(Math.random());
+        GenerateOffsetCoordWithin3KM(
+          lat,
+          lon,
+          minMeters = 800,
+          maxMeters = 2800,
+        ) {
+          const radius = minMeters + Math.random() * (maxMeters - minMeters);
+          const r = radius / 111320;
           const theta = Math.random() * 2 * Math.PI;
           return {
             lat: lat + r * Math.cos(theta),
@@ -734,11 +820,29 @@
           };
         },
 
+        async FetchLiveWeather(lat, lon) {
+          if (!navigator.onLine || !CONFIG.OPENWEATHER_API_KEY) return "Clear";
+          try {
+            const res = await fetch(
+              `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${CONFIG.OPENWEATHER_API_KEY}`,
+            );
+            if (!res.ok) throw new Error("Weather API Error");
+            const data = await res.json();
+            return data.weather[0].main;
+          } catch (e) {
+            return "Clear";
+          }
+        },
+
         async FetchRoute(start, end) {
+          if (!navigator.onLine || !CONFIG.ORS_API_KEY) {
+            return this.GetFallbackRoute(start, end);
+          }
+
           const url = `https://api.openrouteservice.org/v2/directions/driving-car?api_key=${CONFIG.ORS_API_KEY}&start=${start.lon},${start.lat}&end=${end.lon},${end.lat}`;
           try {
             const res = await fetch(url);
-            if (!res.ok) throw new Error("Route API Request Failed");
+            if (!res.ok) throw new Error("Route API Error");
             const data = await res.json();
             const route = data.features[0];
 
@@ -748,17 +852,20 @@
               duration: route.properties.summary.duration,
             };
           } catch (err) {
-            console.warn("ORS Routing Fallback applied:", err);
-            const dist = MapUtils.HaversineDistance(start, end);
-            return {
-              coords: [
-                [start.lat, start.lon],
-                [end.lat, end.lon],
-              ],
-              distance: dist,
-              duration: dist / 10,
-            };
+            return this.GetFallbackRoute(start, end);
           }
+        },
+
+        GetFallbackRoute(start, end) {
+          const dist = MapUtils.HaversineDistance(start, end);
+          return {
+            coords: [
+              [start.lat, start.lon],
+              [end.lat, end.lon],
+            ],
+            distance: dist,
+            duration: Math.max(25, dist / 12),
+          };
         },
       };
 
@@ -809,7 +916,7 @@
       };
 
       /* =========================================================================
-       MODULE: LEAFLET REAL-WORLD MINIMAP
+       MODULE: LEAFLET MINIMAP
        ========================================================================= */
       const Minimap = {
         map: null,
@@ -829,19 +936,20 @@
 
           L.tileLayer(
             "https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png",
+            // "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
             {
               maxZoom: 19,
             },
           ).addTo(this.map);
 
-          const carIcon = L.divIcon({
+          const truckIcon = L.divIcon({
             className: "custom-car-icon",
-            html: `<div style="width:14px;height:14px;background:#38bdf8;border:2px solid white;border-radius:50%;box-shadow:0 0 8px #38bdf8;"></div>`,
+            html: `<div style="width:14px;height:14px;background:#f59e0b;border:2px solid white;border-radius:3px;box-shadow:0 0 8px #f59e0b;"></div>`,
             iconSize: [14, 14],
           });
           this.playerMarker = L.marker(
             [CONFIG.DEFAULT_LAT, CONFIG.DEFAULT_LON],
-            { icon: carIcon },
+            { icon: truckIcon },
           ).addTo(this.map);
         },
 
@@ -855,7 +963,7 @@
           if (this.endMarker) this.map.removeLayer(this.endMarker);
 
           this.routePolyline = L.polyline(coords, {
-            color: "#0284c7",
+            color: "#f59e0b",
             weight: 5,
             opacity: 0.9,
           }).addTo(this.map);
@@ -922,7 +1030,7 @@
         }
 
         EmitExhaust(pos) {
-          const pGeo = new THREE.SphereGeometry(0.15, 4, 4);
+          const pGeo = new THREE.SphereGeometry(0.2, 4, 4);
           const pMat = new THREE.MeshBasicMaterial({
             color: 0x94a3b8,
             transparent: true,
@@ -931,7 +1039,7 @@
           const p = new THREE.Mesh(pGeo, pMat);
           p.position.copy(pos);
           p.position.x += (Math.random() - 0.5) * 0.4;
-          p.position.z -= 1.8;
+          p.position.z -= 2.5;
           this.scene.add(p);
 
           this.particles.push({
@@ -991,7 +1099,7 @@
       }
 
       /* =========================================================================
-       MODULE: THREE.JS GRAPHICS & ENGINE
+       MODULE: THREE.JS ENGINE & FOOD TRUCK MODEL
        ========================================================================= */
       const Engine3D = {
         scene: null,
@@ -1001,6 +1109,7 @@
         headlights: [],
         packageMesh: null,
         npcVehicles: [],
+        obstacles: [],
         roadMesh: null,
         roadMat: null,
         roadTexture: null,
@@ -1021,7 +1130,7 @@
             0.1,
             1000,
           );
-          this.camera.position.set(0, 5, -10);
+          this.camera.position.set(0, 6, -12);
 
           this.renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
           this.renderer.setSize(window.innerWidth, window.innerHeight);
@@ -1036,7 +1145,7 @@
           this.particles = new ParticleSystem(this.scene);
 
           this.BuildEnvironment();
-          this.BuildPlayerVehicle();
+          this.BuildFoodTruckVehicle();
           this.BuildStationZoneMarker();
           this.SetupControls();
 
@@ -1049,22 +1158,19 @@
           cvs.height = 512;
           const ctx = cvs.getContext("2d");
 
-          // Asphalt Base
           ctx.fillStyle = "#2d3748";
           ctx.fillRect(0, 0, 512, 512);
 
-          // Solid Yellow Shoulder Lines
           ctx.fillStyle = "#eab308";
           ctx.fillRect(16, 0, 10, 512);
           ctx.fillRect(486, 0, 10, 512);
 
-          // Broken White Lane Demarcations
           ctx.fillStyle = "#ffffff";
           const dashLen = 40;
           const gapLen = 40;
           for (let y = 0; y < 512; y += dashLen + gapLen) {
-            ctx.fillRect(175, y, 8, dashLen); // Left-Mid Lane
-            ctx.fillRect(329, y, 8, dashLen); // Mid-Right Lane
+            ctx.fillRect(175, y, 8, dashLen);
+            ctx.fillRect(329, y, 8, dashLen);
           }
 
           const texture = new THREE.CanvasTexture(cvs);
@@ -1153,48 +1259,91 @@
           this.scene.add(ground);
         },
 
-        BuildPlayerVehicle() {
-          const carGroup = new THREE.Group();
+        BuildFoodTruckVehicle() {
+          const truckGroup = new THREE.Group();
 
-          const bodyGeo = new THREE.BoxGeometry(2.2, 1, 4);
-          const bodyMat = new THREE.MeshStandardMaterial({
-            color: 0x38bdf8,
+          // High Rear Cargo Box Body
+          const boxGeo = new THREE.BoxGeometry(2.4, 2.2, 3.2);
+          const boxMat = new THREE.MeshStandardMaterial({
+            color: 0xf59e0b,
             roughness: 0.3,
-            metalness: 0.4,
+            metalness: 0.1,
           });
-          const body = new THREE.Mesh(bodyGeo, bodyMat);
-          body.position.y = 0.6;
-          carGroup.add(body);
+          const boxMesh = new THREE.Mesh(boxGeo, boxMat);
+          boxMesh.position.set(0, 1.4, -0.6);
+          truckGroup.add(boxMesh);
 
-          const cabinGeo = new THREE.BoxGeometry(1.7, 0.7, 2);
-          const cabinMat = new THREE.MeshStandardMaterial({
+          // Service Window Hatch Accent
+          const windowGeo = new THREE.BoxGeometry(0.1, 0.8, 1.6);
+          const windowMat = new THREE.MeshStandardMaterial({
+            color: 0x38bdf8,
+            roughness: 0.2,
+          });
+          const windowMesh = new THREE.Mesh(windowGeo, windowMat);
+          windowMesh.position.set(1.21, 1.5, -0.6);
+          truckGroup.add(windowMesh);
+
+          // Front Driver Cab
+          const cabGeo = new THREE.BoxGeometry(2.3, 1.6, 1.6);
+          const cabMat = new THREE.MeshStandardMaterial({
+            color: 0xffffff,
+            roughness: 0.3,
+          });
+          const cabMesh = new THREE.Mesh(cabGeo, cabMat);
+          cabMesh.position.set(0, 1.1, 1.6);
+          truckGroup.add(cabMesh);
+
+          // Windshield Glass
+          const windshieldGeo = new THREE.BoxGeometry(2.1, 0.7, 0.1);
+          const windshieldMat = new THREE.MeshStandardMaterial({
             color: 0x0f172a,
             roughness: 0.1,
           });
-          const cabin = new THREE.Mesh(cabinGeo, cabinMat);
-          cabin.position.set(0, 1.35, -0.2);
-          carGroup.add(cabin);
+          const windshield = new THREE.Mesh(windshieldGeo, windshieldMat);
+          windshield.position.set(0, 1.4, 2.36);
+          truckGroup.add(windshield);
 
-          [-0.7, 0.7].forEach((x) => {
+          // Wheels
+          const wheelGeo = new THREE.CylinderGeometry(0.45, 0.45, 0.4, 16);
+          const wheelMat = new THREE.MeshStandardMaterial({
+            color: 0x1e293b,
+            roughness: 0.9,
+          });
+          wheelGeo.rotateZ(Math.PI / 2);
+
+          [
+            [-1.2, 0.45, 1.5],
+            [1.2, 0.45, 1.5],
+            [-1.2, 0.45, -1.2],
+            [1.2, 0.45, -1.2],
+          ].forEach((pos) => {
+            const wheel = new THREE.Mesh(wheelGeo, wheelMat);
+            wheel.position.set(...pos);
+            truckGroup.add(wheel);
+          });
+
+          // Headlights
+          [-0.8, 0.8].forEach((x) => {
             const hl = new THREE.SpotLight(0xffffff, 2, 40, Math.PI / 6, 0.5);
-            hl.position.set(x, 0.8, 1.8);
+            hl.position.set(x, 0.9, 2.4);
             hl.target.position.set(x, 0, 20);
-            carGroup.add(hl);
-            carGroup.add(hl.target);
+            truckGroup.add(hl);
+            truckGroup.add(hl.target);
             this.headlights.push(hl);
           });
 
-          const pkgGeo = new THREE.BoxGeometry(1.2, 0.8, 1.2);
+          // Roof Hot Food Box Indicator
+          const pkgGeo = new THREE.BoxGeometry(1.4, 0.7, 1.4);
           const pkgMat = new THREE.MeshStandardMaterial({
-            color: 0xd97706,
-            roughness: 0.8,
+            color: 0xef4444,
+            roughness: 0.5,
           });
           this.packageMesh = new THREE.Mesh(pkgGeo, pkgMat);
-          this.packageMesh.position.set(0, 2.0, -0.2);
+          this.packageMesh.position.set(0, 2.85, -0.6);
           this.packageMesh.visible = false;
-          carGroup.add(this.packageMesh);
+          truckGroup.add(this.packageMesh);
 
-          this.playerMesh = carGroup;
+          this.playerMesh = truckGroup;
           this.playerMesh.position.set(CONFIG.LANES[1], 0, 0);
           this.scene.add(this.playerMesh);
         },
@@ -1219,10 +1368,10 @@
           this.zoneMesh.visible = true;
 
           if (phase === "PICKUP") {
-            this.zoneMesh.material.color.setHex(0xf59e0b); // Orange/Yellow for Pickup
+            this.zoneMesh.material.color.setHex(0xf59e0b);
             this.zoneMesh.position.x = CONFIG.LAYBY_X;
           } else {
-            this.zoneMesh.material.color.setHex(0x22c55e); // Green for Delivery Drop-off
+            this.zoneMesh.material.color.setHex(0x22c55e);
             this.zoneMesh.position.x = CONFIG.LANES[1];
           }
         },
@@ -1235,13 +1384,25 @@
           this.npcVehicles.push(npc);
         },
 
+        SpawnObstacle() {
+          if (this.obstacles.length >= 4) return;
+          const lane = Math.floor(Math.random() * CONFIG.LANES.length);
+          const type = Math.random() < 0.5 ? "OIL" : "BARRIER";
+          const startZ = this.playerMesh.position.z + 90 + Math.random() * 60;
+          const obs = new RoadObstacle(this.scene, type, lane, startZ);
+          this.obstacles.push(obs);
+        },
+
         SetupControls() {
+          // Controls Rule: A Key = Move Left (-1), D Key = Move Right (+1)
           window.addEventListener("keydown", (e) => {
             SoundEngine.Init();
             if (e.key === "a" || e.key === "A" || e.key === "ArrowLeft")
-              this.ShiftLane(-1);
-            if (e.key === "d" || e.key === "D" || e.key === "ArrowRight")
+              //this.ShiftLane(-1);
               this.ShiftLane(1);
+            if (e.key === "d" || e.key === "D" || e.key === "ArrowRight")
+              //this.ShiftLane(1);
+              this.ShiftLane(-1);
             if (e.key === "w" || e.key === "W" || e.key === "ArrowUp")
               this.input.gas = true;
             if (e.key === "s" || e.key === "S" || e.key === "ArrowDown")
@@ -1257,6 +1418,7 @@
 
           const bindTouch = (id, onStart, onEnd) => {
             const el = document.getElementById(id);
+            if (!el) return;
             el.addEventListener("touchstart", (e) => {
               e.preventDefault();
               SoundEngine.Init();
@@ -1273,14 +1435,15 @@
             el.addEventListener("mouseup", onEnd);
           };
 
+          // Mobile Controls Rule: Left Button = Move Left (-1), Right Button = Move Right (+1)
           bindTouch(
             "btn-left",
-            () => this.ShiftLane(-1),
+            () => this.ShiftLane(1),
             () => {},
           );
           bindTouch(
             "btn-right",
-            () => this.ShiftLane(1),
+            () => this.ShiftLane(-1),
             () => {},
           );
           bindTouch(
@@ -1296,7 +1459,11 @@
         },
 
         ShiftLane(dir) {
-          if (!GameState.isGameRunning || GameState.currentPhase === "LAYBY")
+          if (
+            !GameState.isGameRunning ||
+            GameState.currentPhase === "LAYBY" ||
+            GameState.spinTimeRemaining > 0
+          )
             return;
           this.targetLaneIndex = THREE.MathUtils.clamp(
             this.targetLaneIndex + dir,
@@ -1333,29 +1500,60 @@
             );
           }
 
-          SoundEngine.UpdateEngine(GameState.currentSpeed / CONFIG.MAX_SPEED);
-
-          if (Math.random() < 0.003) SoundEngine.PlayHorn();
-
           const distDelta = GameState.currentSpeed * delta;
           GameState.distanceTraveled += distDelta;
+
+          // Realistic Distance-Based Fuel Depletion Logic
+          if (distDelta > 0) {
+            // Phase 1 (PICKUP): 1% per 500m => 0.002% per meter
+            // Phase 2 (DROPOFF): 1% per 350m => ~0.00285% per meter
+            const ratePerMeter =
+              GameState.currentPhase === "PICKUP" ? 1.0 / 500.0 : 1.0 / 350.0;
+            GameState.fuel = Math.max(
+              0,
+              GameState.fuel - distDelta * ratePerMeter,
+            );
+          }
+
+          const fuelHud = document.getElementById("hud-fuel");
+          fuelHud.innerText = `${Math.round(GameState.fuel)}%`;
+          fuelHud.style.color =
+            GameState.fuel > 40
+              ? "#38bdf8"
+              : GameState.fuel > 18
+                ? "#f59e0b"
+                : "#ef4444";
+
+          if (GameState.fuel <= 0) {
+            App.EndGame(false, "Delivery Failed! Food Truck ran out of fuel.");
+            return;
+          }
+
+          SoundEngine.UpdateEngine(GameState.currentSpeed / CONFIG.MAX_SPEED);
+
           this.playerMesh.position.z += distDelta;
 
-          // Animate Road Texture to simulate speed
           if (this.roadTexture) {
-            this.roadTexture.offset.y -= (GameState.currentSpeed * delta) / 25;
+            this.roadTexture.offset.y -= distDelta / 25;
           }
 
           let targetX = CONFIG.LANES[this.targetLaneIndex];
           if (GameState.currentPhase === "LAYBY") targetX = CONFIG.LAYBY_X;
 
-          this.playerMesh.position.x = THREE.MathUtils.lerp(
-            this.playerMesh.position.x,
-            targetX,
-            delta * 8,
-          );
+          // Spinout effect on oil slick
+          if (GameState.spinTimeRemaining > 0) {
+            GameState.spinTimeRemaining -= delta;
+            this.playerMesh.rotation.y += delta * 12;
+          } else {
+            this.playerMesh.rotation.y = 0;
+            this.playerMesh.position.x = THREE.MathUtils.lerp(
+              this.playerMesh.position.x,
+              targetX,
+              delta * 8,
+            );
+          }
 
-          this.camera.position.z = this.playerMesh.position.z - 10;
+          this.camera.position.z = this.playerMesh.position.z - 12;
           this.camera.position.x = THREE.MathUtils.lerp(
             this.camera.position.x,
             this.playerMesh.position.x * 0.5,
@@ -1367,28 +1565,28 @@
             this.playerMesh.position.z + 15,
           );
 
+          // Keep continuous infinite road aligned with player mesh
           if (this.roadMesh.position.z < this.playerMesh.position.z + 100) {
-            this.roadMesh.position.z += 100;
+            this.roadMesh.position.z = this.playerMesh.position.z + 200;
           }
 
-          // Spawn Reactive Traffic
+          // Spawn traffic & obstacles
           if (Math.random() < 0.03 && GameState.currentPhase !== "LAYBY")
             this.SpawnNPC();
+          if (Math.random() < 0.02 && GameState.currentPhase !== "LAYBY")
+            this.SpawnObstacle();
 
-          // Update NPC Vehicles & Continuous Collision Check
           const playerBB = new THREE.Box3().setFromObject(this.playerMesh);
 
+          // Traffic collisions
           for (let i = this.npcVehicles.length - 1; i >= 0; i--) {
             const npc = this.npcVehicles[i];
             npc.Update(delta, this.playerMesh.position.z, this.targetLaneIndex);
-
             const npcBB = new THREE.Box3().setFromObject(npc.mesh);
 
             if (playerBB.intersectsBox(npcBB)) {
-              // Register collision continuously whenever cooldown expires (0.3s interval)
               if (npc.hitCooldown <= 0) {
-                npc.hitCooldown = 0.3; // Reset hit cooldown for multi-impact registration
-
+                npc.hitCooldown = 0.3;
                 SoundEngine.PlayCollision();
                 this.particles.EmitSparks(this.playerMesh.position);
                 GameState.currentSpeed = Math.max(
@@ -1396,7 +1594,6 @@
                   GameState.currentSpeed - 14,
                 );
                 this.playerMesh.position.z -= 1.2;
-
                 GameState.damage = Math.min(100, GameState.damage + 15);
 
                 const dmgHud = document.getElementById("hud-damage");
@@ -1411,7 +1608,7 @@
                 if (GameState.damage >= 100) {
                   App.EndGame(
                     false,
-                    "Vehicle Totaled! Excessive collision damage.",
+                    "Delivery Failed! Food Truck damaged beyond operation.",
                   );
                   return;
                 }
@@ -1421,6 +1618,43 @@
             if (npc.mesh.position.z < this.playerMesh.position.z - 15) {
               npc.Destroy();
               this.npcVehicles.splice(i, 1);
+            }
+          }
+
+          // Road Obstacles collisions
+          for (let i = this.obstacles.length - 1; i >= 0; i--) {
+            const obs = this.obstacles[i];
+            const obsBB = new THREE.Box3().setFromObject(obs.group);
+
+            if (!obs.hit && playerBB.intersectsBox(obsBB)) {
+              obs.hit = true;
+              if (obs.type === "OIL") {
+                SoundEngine.PlaySlickSound();
+                GameState.spinTimeRemaining = 0.6; // 0.6 second spinout
+              } else {
+                // BARRIER
+                SoundEngine.PlayCollision();
+                this.particles.EmitSparks(this.playerMesh.position);
+                GameState.currentSpeed = Math.max(
+                  0,
+                  GameState.currentSpeed - 12,
+                );
+                GameState.damage = Math.min(100, GameState.damage + 10);
+
+                const dmgHud = document.getElementById("hud-damage");
+                dmgHud.innerText = `${GameState.damage}%`;
+                dmgHud.style.color =
+                  GameState.damage > 60
+                    ? "#ef4444"
+                    : GameState.damage > 30
+                      ? "#f59e0b"
+                      : "#22c55e";
+              }
+            }
+
+            if (obs.group.position.z < this.playerMesh.position.z - 15) {
+              obs.Destroy();
+              this.obstacles.splice(i, 1);
             }
           }
 
@@ -1437,11 +1671,24 @@
         Reset() {
           this.npcVehicles.forEach((n) => n.Destroy());
           this.npcVehicles = [];
+          this.obstacles.forEach((o) => o.Destroy());
+          this.obstacles = [];
+
           this.targetLaneIndex = 1;
+          GameState.spinTimeRemaining = 0;
           this.packageMesh.visible = false;
           this.zoneMesh.visible = false;
+
+          // Full reset of player mesh & camera
           this.playerMesh.position.set(CONFIG.LANES[1], 0, 0);
-          this.camera.position.set(0, 5, -10);
+          this.playerMesh.rotation.set(0, 0, 0);
+          this.camera.position.set(0, 6, -12);
+
+          // Guarantees immediate road display on every restart run
+          if (this.roadMesh) {
+            this.roadMesh.position.set(0, 0, 200);
+            if (this.roadTexture) this.roadTexture.offset.y = 0;
+          }
         },
       };
 
@@ -1455,9 +1702,12 @@
           Minimap.Init();
           Engine3D.Init();
 
-          document
-            .getElementById("btn-play")
-            .addEventListener("click", () => this.ShowJobSelection());
+          const playBtn = document.getElementById("btn-play");
+          playBtn.addEventListener("click", () => {
+            SoundEngine.Init();
+            this.ShowJobSelection();
+          });
+
           document
             .getElementById("btn-retry")
             .addEventListener("click", () => this.RetryJob());
@@ -1474,7 +1724,10 @@
         async ShowJobSelection() {
           this.SwitchScreen("screen-jobs");
           const jobContainer = document.getElementById("job-list");
-          jobContainer.innerHTML = `<div style="color:#94a3b8;">Locating GPS, weather & local hubs...</div>`;
+          jobContainer.innerHTML = `
+          <div class="spinner"></div>
+          <div style="color: #94a3b8; margin-top: 8px;">Locating nearby kitchens within 3 KM...</div>
+        `;
 
           GameState.userCoords = await GeoService.GetUserPosition();
 
@@ -1484,28 +1737,50 @@
           );
           Engine3D.ApplyTimeAndWeatherAmbiance(weather);
 
-          const envLabel = `${GameState.weatherCondition} / ${GameState.timeOfDayLabel}`;
-          document.getElementById("hud-env").innerText = envLabel;
+          const pickup1 = GeoService.GenerateOffsetCoordWithin3KM(
+            GameState.userCoords.lat,
+            GameState.userCoords.lon,
+            800,
+            1500,
+          );
+          const drop1_A = GeoService.GenerateOffsetCoordWithin3KM(
+            pickup1.lat,
+            pickup1.lon,
+            1000,
+            2500,
+          );
 
-          // Generate Real Local Jobs (Magboro / Ikeja Corridor)
+          const pickup2 = GeoService.GenerateOffsetCoordWithin3KM(
+            GameState.userCoords.lat,
+            GameState.userCoords.lon,
+            1000,
+            1800,
+          );
+          const drop2_A = GeoService.GenerateOffsetCoordWithin3KM(
+            pickup2.lat,
+            pickup2.lon,
+            800,
+            2000,
+          );
+          const drop2_B = GeoService.GenerateOffsetCoordWithin3KM(
+            drop2_A.lat,
+            drop2_A.lon,
+            800,
+            2200,
+          );
+
           const jobs = [
             {
-              title: "Local Pickup ➔ Ikeja Hub",
-              pickupName: "Magboro Local Waypoint",
-              dropoffName: LOCAL_HUBS[1].name,
-              pickup: GeoService.GenerateOffsetCoord(
-                GameState.userCoords.lat,
-                GameState.userCoords.lon,
-                2000,
-              ),
-              dropoff: { lat: LOCAL_HUBS[1].lat, lon: LOCAL_HUBS[1].lon },
+              title: "Express Order: Hot Pizza & Burger Combo",
+              pickupName: "Central Cloud Kitchen (< 1.5 KM)",
+              pickup: pickup1,
+              dropoffs: [drop1_A],
             },
             {
-              title: "Interstate Corridor: Berger ➔ Victoria Island",
-              pickupName: LOCAL_HUBS[3].name,
-              dropoffName: LOCAL_HUBS[2].name,
-              pickup: { lat: LOCAL_HUBS[3].lat, lon: LOCAL_HUBS[3].lon },
-              dropoff: { lat: LOCAL_HUBS[2].lat, lon: LOCAL_HUBS[2].lon },
+              title: "Multi-Stop Run: 2 Catering Meal Boxes",
+              pickupName: "Gourmet Express Hub (< 1.8 KM)",
+              pickup: pickup2,
+              dropoffs: [drop2_A, drop2_B],
             },
           ];
 
@@ -1515,15 +1790,15 @@
             card.className = "job-card";
             card.innerHTML = `
             <div class="job-title">${job.title}</div>
-            <div class="job-meta">Pickup: ${job.pickupName}</div>
-            <div class="job-sub">Drop-off: ${job.dropoffName}</div>
+            <div class="job-meta">Kitchen: ${job.pickupName}</div>
+            <div class="job-sub">Stops: ${job.dropoffs.length} delivery point(s) within 3 KM</div>
           `;
-            card.onclick = () => this.StartJob(job.pickup, job.dropoff);
+            card.onclick = () => this.StartJob(job.pickup, job.dropoffs);
             jobContainer.appendChild(card);
           });
         },
 
-        async StartJob(pickup, dropoff) {
+        async StartJob(pickup, dropoffs) {
           this.SwitchScreen("game-container");
           Minimap.Resize();
 
@@ -1533,18 +1808,27 @@
           GameState.distanceTraveled = 0;
           GameState.currentSpeed = 0;
           GameState.damage = 0;
+          GameState.fuel = 100;
           GameState.isGameRunning = false;
+          GameState.isTimerActive = false; // Freeze timer in Phase 1
+          GameState.packagesCount = dropoffs.length;
+          GameState.currentDropoffIndex = 0;
+          GameState.dropoffLocations = dropoffs;
 
           document.getElementById("hud-damage").innerText = "0%";
           document.getElementById("hud-damage").style.color = "#22c55e";
+          document.getElementById("hud-fuel").innerText = "100%";
+          document.getElementById("hud-orders").innerText =
+            GameState.packagesCount;
+          document.getElementById("hud-timer").innerText = "PAUSED";
 
           const routeData = await GeoService.FetchRoute(
             GameState.userCoords,
             pickup,
           );
-          this.SetupPhaseData(routeData);
+          this.SetupPhaseData(routeData, false);
 
-          GameState.activeJob = { pickup, dropoff };
+          GameState.activeJob = { pickup, dropoffs };
 
           Minimap.SetRoute(GameState.routePoints);
           Minimap.UpdatePosition(
@@ -1556,7 +1840,7 @@
 
           GameState.isGameRunning = true;
           document.getElementById("hud-status").innerText =
-            "Phase 1: Drive to Pickup";
+            "Phase 1: Drive to Kitchen";
           document.getElementById("hud-status").style.color = "#f59e0b";
         },
 
@@ -1564,14 +1848,14 @@
           if (GameState.activeJob) {
             this.StartJob(
               GameState.activeJob.pickup,
-              GameState.activeJob.dropoff,
+              GameState.activeJob.dropoffs,
             );
           } else {
             this.ShowJobSelection();
           }
         },
 
-        SetupPhaseData(routeData) {
+        SetupPhaseData(routeData, isFreshnessPhase = false) {
           GameState.routePoints = routeData.coords;
           GameState.totalRouteDistance = routeData.distance;
 
@@ -1590,16 +1874,28 @@
           GameState.routeCumDistances = cum;
           GameState.distanceTraveled = 0;
 
-          // Timer Reset: Allocate duration dynamically per phase
-          GameState.timeRemaining = Math.max(
-            40,
-            Math.round(routeData.duration * 1.1),
-          );
+          if (isFreshnessPhase) {
+            GameState.timeRemaining = Math.max(
+              30,
+              Math.round(routeData.duration * 0.95),
+            );
+            GameState.isTimerActive = true;
+          }
         },
 
         TriggerLaybyStop() {
           GameState.currentPhase = "LAYBY";
           SoundEngine.PlayLaybyBell();
+
+          if (GameState.currentDropoffIndex === 0) {
+            document.getElementById("popup-title").innerText =
+              "Kitchen Pickup Reached!";
+            document.getElementById("popup-msg").innerText =
+              `Loaded ${GameState.packagesCount} meal order(s)! Freshness timer active.`;
+            document.getElementById("btn-resume").innerText =
+              "START DELIVERY RUN";
+          }
+
           document.getElementById("action-popup").classList.remove("hidden");
           Engine3D.packageMesh.visible = true;
         },
@@ -1607,15 +1903,19 @@
         async ResumeFromLayby() {
           document.getElementById("action-popup").classList.add("hidden");
 
+          const targetDrop =
+            GameState.dropoffLocations[GameState.currentDropoffIndex];
+          const startPoint =
+            GameState.currentDropoffIndex === 0
+              ? GameState.activeJob.pickup
+              : GameState.dropoffLocations[GameState.currentDropoffIndex - 1];
+
           document.getElementById("hud-status").innerText =
-            "Phase 2: Deliver to Drop-off";
+            `Delivery ${GameState.currentDropoffIndex + 1}/${GameState.packagesCount}: To Customer`;
           document.getElementById("hud-status").style.color = "#38bdf8";
 
-          const routeData = await GeoService.FetchRoute(
-            GameState.activeJob.pickup,
-            GameState.activeJob.dropoff,
-          );
-          this.SetupPhaseData(routeData); // Timer resets here for Drop-off phase!
+          const routeData = await GeoService.FetchRoute(startPoint, targetDrop);
+          this.SetupPhaseData(routeData, true); // Freshness countdown begins
 
           Minimap.SetRoute(GameState.routePoints);
           Engine3D.UpdateStationZone(GameState.totalRouteDistance, "DROPOFF");
@@ -1634,10 +1934,18 @@
           if (GameState.isGameRunning) {
             Engine3D.Update(delta);
 
-            GameState.timeRemaining -= delta;
-            if (GameState.timeRemaining <= 0) {
-              this.EndGame(false, "Time expired before completing delivery!");
-              return;
+            if (GameState.isTimerActive) {
+              GameState.timeRemaining -= delta;
+              document.getElementById("hud-timer").innerText =
+                MapUtils.FormatTime(GameState.timeRemaining);
+
+              if (GameState.timeRemaining <= 0) {
+                this.EndGame(
+                  false,
+                  "Delivery Failed! Food went stale before reaching customer.",
+                );
+                return;
+              }
             }
 
             const progressRatio = Math.min(
@@ -1658,17 +1966,24 @@
 
             Minimap.UpdatePosition(currentPos[0], currentPos[1]);
 
-            // Formatted Timer (mins:secs)
-            document.getElementById("hud-timer").innerText =
-              MapUtils.FormatTime(GameState.timeRemaining);
-            document.getElementById("hud-progress").innerText =
-              `${Math.round(progressRatio * 100)}%`;
-
             if (progressRatio >= 1) {
               if (GameState.currentPhase === "PICKUP") {
                 this.TriggerLaybyStop();
               } else if (GameState.currentPhase === "DROPOFF") {
-                this.EndGame(true, "Package successfully delivered on time!");
+                GameState.currentDropoffIndex++;
+                const remainingOrders =
+                  GameState.packagesCount - GameState.currentDropoffIndex;
+                document.getElementById("hud-orders").innerText =
+                  remainingOrders;
+
+                if (GameState.currentDropoffIndex < GameState.packagesCount) {
+                  this.TriggerLaybyStop();
+                } else {
+                  this.EndGame(
+                    true,
+                    "All food orders delivered hot and fresh!",
+                  );
+                }
               }
             }
           }
@@ -1676,6 +1991,7 @@
 
         EndGame(success, message) {
           GameState.isGameRunning = false;
+          GameState.isTimerActive = false;
 
           SoundEngine.StopEngine();
 
@@ -1683,7 +1999,7 @@
             ? "Delivery Success!"
             : "Delivery Failed!";
           document.getElementById("gameover-title").style.color = success
-            ? "#38bdf8"
+            ? "#f59e0b"
             : "#ef4444";
           document.getElementById("gameover-msg").innerText = message;
 
@@ -1693,9 +2009,9 @@
             GameState.timeRemaining,
           );
           document.getElementById("stat-damage").innerText =
-            `${GameState.damage}%`;
-          document.getElementById("stat-env").innerText =
-            `${GameState.weatherCondition} / ${GameState.timeOfDayLabel}`;
+            `${100 - GameState.damage}%`;
+          document.getElementById("stat-fuel").innerText =
+            `${Math.round(GameState.fuel)}%`;
 
           if (success) {
             SoundEngine.PlayCelebrationFanfare();
