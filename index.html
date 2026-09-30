@@ -1528,13 +1528,6 @@
             App.EndGame(false, "Delivery Failed! Food Truck ran out of fuel.");
             return;
           }
-          if (GameState.damage == 100) {
-            App.EndGame(
-              false,
-              "Delivery Failed! Food Truck is badly damaged! Reckless driving!.",
-            );
-            return;
-          }
 
           SoundEngine.UpdateEngine(GameState.currentSpeed / CONFIG.MAX_SPEED);
 
@@ -1612,7 +1605,7 @@
                       ? "#f59e0b"
                       : "#22c55e";
 
-                if (GameState.damage >= 100) {
+                if (GameState.damage == 100) {
                   App.EndGame(
                     false,
                     "Delivery Failed! Food Truck damaged beyond operation.",
